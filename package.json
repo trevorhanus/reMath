@@ -1,0 +1,42 @@
+{
+  "name": "remath",
+  "version": "0.0.5",
+  "description": "A reactive spreadsheet-like library",
+  "main": "lib/Remath.js",
+  "scripts": {
+    "test": "npm run quick-build && npm run tape",
+    "quick-build": "babel src --out-dir lib",
+    "tape": "tape test/**/*.js | faucet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trevorhanus/recalc.git"
+  },
+  "keywords": [
+    "calculations",
+    "math",
+    "engineering",
+    "mathematics",
+    "spreadsheet"
+  ],
+  "author": "Trevor Hanus <trevorhanus@gmail.com> (http://github.com/trevorhanus)",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.6.5",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-es2015-destructuring": "^6.6.5",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.1.4",
+    "babel-preset-stage-0": "^6.5.0",
+    "faucet": "0.0.1",
+    "tape": "^4.5.1",
+    "tape-catch": "^1.0.4"
+  },
+  "dependencies": {
+    "check-types": "^6.0.0",
+    "mathjs": "^3.1.0",
+    "mobx": "^2.0.0",
+    "node-uuid": "^1.4.3",
+    "numeral": "^1.5.3",
+    "underscore": "^1.8.3"
+  }
+}
