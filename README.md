@@ -2,7 +2,7 @@
 
 A reactive spreadsheet-like math library.
 
-Uses mobx for reactivity, Numeral.js to format values, and mathjs to parse and evaluate the math.
+Depends on mobx for reactivity, Numeral.js to format values, and mathjs to parse and evaluate the math.
 
 ## Example Usage
 

@@ -16,7 +16,10 @@ export default class Remath {
   autorun = autorun;
 
   find(symbol) {
+    if (!symbol) throw new Error('must pass a symbol to find');
+
     let cell = _.findWhere(this.cells, {symbol: symbol});
+    
     if (!!cell) {
       return cell;
     } else {
@@ -38,6 +41,11 @@ export default class Remath {
       check(formula, 'Cell.formula');
       check(displayFormat, 'Cell.displayFormat');
 
+      // Make sure symbol does not exists
+      if (this._symbolDoesExist(symbol)) {
+        throw new Error(symbol + 'already exists');
+      };
+
       let cell = new Cell(symbol, this, options);
       if (!!cell) {
         this.cells.push(cell);
@@ -52,13 +60,39 @@ export default class Remath {
     }
   }
 
+  /**
+   * Removes a cell from the sheet
+   *
+   *
+   */
+  removeCell(symbol) {
+    // Make sure the symbol exists
+    // If not, this is most likely a developer error, so throw an uncaught error
+    if (!this._symbolDoesExist(symbol)) {
+      throw new Error(symbol + 'does not exist');
+    }
+
+    // Find out if there are other cells that depend on the value of this cell
+    // If so, emit a warning, because these cells will now have undefined values
+    if (this._cellIsReferencedByOthers(symbol)) {
+      this._alert({type: 'warning', message: 'there are other cells the depend on ' + symbol + '. Deleting it will cause errors.'});
+    }
+
+    // Now we need to find all cells that depend on this cell, and delete their references
+    _.forEach(this.cells, (cell) => {
+      if (cell._dependsOn(symbol)) {
+        cell._removeDependent(symbol);
+      }
+    });
+
+    // Remove the cell from the cells collection
+    const index = this._indexOfSymbol(symbol);
+    this.cells.splice(index, 1);
+  }
+
   onAlert(callback) {
     // TODO: verify callback is a function
     this._alertCallbacks.push(callback);
-  }
-
-  removeAlert(id) {
-    this._removeAlert(id);
   }
 
   /**
@@ -68,6 +102,18 @@ export default class Remath {
    _alert(alert) {
      this._alertCallbacks.forEach(callback => {
        callback(alert);
+     });
+   }
+
+   _cellIsReferencedByOthers(symbol) {
+     return _.reduce(this.cells, (isReferenced, cell) => {
+       return cell._dependsOn(symbol);
+     }, false);
+   }
+
+   _indexOfSymbol(symbol) {
+     return _.findIndex(this.cells, (cell) => {
+       return cell.symbol === symbol;
      });
    }
 

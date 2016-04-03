@@ -1,29 +1,64 @@
-// var test = require('tape-catch');
-// var Calc = require('..').default;
-// var mobx = require('mobx');
-//
-// /**
-//  * Autorun
-//  */
-//
-// test('Runs an autorun when input value is updated', (t) => {
-//
-//   var calc = new Calc();
-//   var a = calc.addInput('a');
-//   var numberOfRuns = 0;
-//   mobx.autorun(() => {
-//     numberOfRuns++;
-//     if (numberOfRuns === 2) {
-//       t.equal(a.value, 10);
-//       t.end();
-//     } else {
-//       var value = calc.find('a').value;
-//     }
-//   })
-//
-//   a.value = 10;
-// });
-//
+var test = require('tape-catch');
+var Remath = require('..').default;
+
+/**
+ * Autorun
+ */
+
+test('Runs an autorun when input value is updated', (t) => {
+
+  var sheet = new Remath();
+  var a = sheet.addCell('a');
+  var called = 0;
+
+  sheet.autorun(() => {
+    called++;
+    a.value();
+  });
+
+  a.setFormula('10');
+
+  t.equal(called, 2);
+  t.end();
+});
+
+test('Updates a formula when a dependent changes value', (t) => {
+
+  var sheet = new Remath();
+  var a = sheet.addCell('a', {formula: '0'});
+  var b = sheet.addCell('b', {formula: 'a + 10'});
+  var called = 0;
+
+  sheet.autorun(() => {
+    called++;
+    b.value();
+  });
+
+  a.setFormula('10');
+
+  t.equal(called, 2);
+  t.end();
+});
+
+test('Updates nested dependents', (t) => {
+
+  var sheet = new Remath();
+  var a = sheet.addCell('a', {formula: '0'});
+  var b = sheet.addCell('b', {formula: 'a + 10'});
+  var c = sheet.addCell('c', {formula: 'b + 10'});
+
+  var called = 0;
+  sheet.autorun(() => {
+    called++;
+    c.value();
+  });
+
+  a.setFormula('10');
+
+  t.equal(called, 2);
+  t.end();
+});
+
 // test('Updates a formula when a dependent changes value', (t) => {
 //
 //   var calc = new Calc();
@@ -43,7 +78,7 @@
 //
 //   a.value = 10;
 // });
-//
+
 // test('Can depend formulas on formulas', (t) => {
 //
 //   var calc = new Calc();

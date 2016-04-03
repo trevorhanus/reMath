@@ -1,4 +1,4 @@
-import {observable, computed} from 'mobx';
+import {observable, computed, map} from 'mobx';
 import {randomUuid} from './utils';
 import math from 'mathjs';
 import numeral from 'numeral';
@@ -11,15 +11,10 @@ export default class Cell {
   symbol;
   name;
   _parentCalc;
-  _dependents = {};
+
   @observable displayFormat = '0,0';
-  @observable x = 0;
-  @observable y = 0;
+  @observable _dependents = map();
   @observable formula = '';
-  @computed get value() {
-    const value = math.eval(this.formula, this._scope());
-    return value;
-  }
 
   // A new cell should only ever be instantiated through the Remath.addCell method
   // Instantiating a cell directly, will not register the cell on the parent sheet
@@ -33,22 +28,32 @@ export default class Cell {
     this.id = randomUuid();
     this.symbol = symbol;
     this.name = name || null;
+    this._dependents = map();
     this._parentSheet = parentSheet;
     this.displayFormat = displayFormat || '0,0';
-    this._dependents = {};
     if (!!formula) this.setFormula(formula);
   }
 
   /**
-   * Public API
-   */
+  * Public API
+  */
+
+  value() {
+    try {
+      const value = math.eval(this.formula, this._scope());
+      return value;
+    } catch(e) {
+      this._parentSheet._alert({type: 'error', message: 'error evaluating ' + this.symbol});
+      return 'error';
+    }
+  }
 
   displayValue() {
     try {
-      if (isNaN(this.value)) {
+      if (isNaN(this.value())) {
         return 'error';
       } else {
-        return numeral(this.value).format(this._displayFormat());
+        return numeral(this.value()).format(this._displayFormat());
       }
     } catch(e) {
       this._parentSheet._alert({type: 'error', message: e.message});
@@ -56,7 +61,7 @@ export default class Cell {
   }
 
   isDependent() {
-    return Object.keys(this._dependents).length > 0;
+    return this._dependents.size > 0;
   }
 
   setFormula(newFormula) {
@@ -103,20 +108,24 @@ export default class Cell {
     return getFormatString(this.displayFormat);
   }
 
+  // Returns a bool if this cell depends on symbol
+  _dependsOn(symbol) {
+    return this._dependents.has(symbol);
+  }
+
+  _removeDependent(symbol) {
+    this._dependents.delete(symbol);
+  }
+
   _removeAllDependents() {
-    this._dependents = {};
+    this._dependents.clear();
   }
 
   _addDependency(symbol) {
     // first make sure the symbol exists in the parentSheet
     if (this._parentSheet._symbolDoesExist(symbol)) {
-      // Make sure the cell is not already dependent on the symbol
-      if (!this._dependents[symbol]) {
-        const dep = this._parentSheet.find(symbol);
-        this._dependents[symbol] = dep;
-      } else {
-        throw new Error('Cell is already dependent on ' + symbol);
-      }
+      const dep = this._parentSheet.find(symbol);
+      this._dependents.set(symbol, dep);
     } else {
       throw new Error('Could not find symbol: ' + symbol);
     }
@@ -124,10 +133,9 @@ export default class Cell {
 
   _scope() {
     var scope = {};
-    for (const symbol in this._dependents) {
-      const dep = this._dependents[symbol];
-      scope[symbol] = dep.value;
-    }
+    this._dependents.forEach((dep, symbol) => {
+      scope[symbol] = dep.value();
+    });
     return scope;
   }
 }

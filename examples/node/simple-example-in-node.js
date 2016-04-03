@@ -10,7 +10,7 @@ a.setFormula('10');
 
 // This anonymous function will run once, immediately, then any time the value of 'a' changes
 sheet.autorun(() => {
-  console.log('The value of a = ', a.value);
+  console.log('The value of a = ', a.value());
 });
 // => The value of a = 10
 
@@ -21,7 +21,7 @@ a.setFormula('5');
 var b = sheet.addCell('b', {formula: 'a + 5'});
 
 sheet.autorun(() => {
-  console.log('The value of b = ', b.value);
+  console.log('The value of b = ', b.value());
   // => The value of b = 10
 })
 

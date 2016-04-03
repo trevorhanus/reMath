@@ -94,12 +94,12 @@ test('Can set the formula', (t) => {
   a.setFormula('10 + 50');
 
   t.equal(a.formula, '10 + 50');
-  t.equal(a.value, 60);
+  t.equal(a.value(), 60);
 
   b.setFormula('50');
   a.setFormula('b + 20');
 
-  t.equal(a.value, 70);
+  t.equal(a.value(), 70);
 
   t.end();
 
@@ -155,6 +155,25 @@ test('Does not change formula when formula is invalid', (t) => {
 
   t.equal('', a.formula);
   t.equal(a.isDependent(), false);
+
+  t.end();
+
+});
+
+test('Does not allow duplicate symbols', (t) => {
+
+  var sheet = new Remath();
+  var called = 0;
+
+  sheet.onAlert(function(alert) {
+    called++;
+  });
+
+  var a = sheet.addCell('a');
+  var aAgain = sheet.addCell('a');
+
+  t.equal(called, 1);
+  t.equal(aAgain, null);
 
   t.end();
 
