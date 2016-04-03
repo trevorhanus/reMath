@@ -2,7 +2,7 @@
 
 A reactive spreadsheet-like math library.
 
-Depends on mobx for reactivity, Numeral.js to format values, and mathjs to parse and evaluate the math.
+Uses mobx for reactivity, Numeral.js to format values, and mathjs to parse and evaluate the math.
 
 ## Example Usage
 
@@ -40,19 +40,13 @@ a.setFormula('10');
 
 ```
 
-## Error Handling
-
-The remath library assumes it is accepting input from end users. End users can input formulas, symbols, names, etc. In general, any exception that is caused by an end user will be caught and any callbacks registered by the Remath.onAlert method will be called. On the other hand, if the library is implemented incorrectly by the developer, the exception will not be caught.
-
-A general rule of thumb is that an error in any public method will call the alert callbacks, and private methods will throw errors. This allows the public methods to catch the errors before they escape the library.
-
 ## API
 
 #### Instantiation
 
 var sheet = new Remath();
 
-#### .onAlert(callback)
+#### .onAlert( callback({type: 'type of error', message: 'error message'}) )
 
 Registers a function to be called when the end user inputs data incorrectly.
 
@@ -60,7 +54,7 @@ eg: The user enters an invalid formula. Or the user enters a symbol that starts 
 
 The callbacks are called with an object with `type` and `message` keys.
 
-#### .addCell(symbol, options)
+#### .addCell(symbol: String, options: Object)
 
 sheet.addCell('gamma')
 
@@ -79,15 +73,15 @@ CellOptions {
   displayFormat: String => any string that works with numeral.js
 }
 
-#### .removeCell(symbol || {id: id})
+#### .removeCell(symbol)
 
 sheet.removeCell('alpha')
 
 Removes a cell from the sheet.
 
-#### .find(symbol || {id: id})
+#### .find(symbol)
 
-sheet.find({id: '8AB346FE-0F47-4069-82ED-59DB18840CA2'})
+sheet.find('gamma')
 
 Returns the cell if it can be found. Calls the onAlert callbacks if the symbol or id can't be found
 
@@ -95,13 +89,17 @@ Returns the cell if it can be found. Calls the onAlert callbacks if the symbol o
 
 ## Public API
 
-##### Instantiation
+#### Instantiation
 
-var cell = new Cell(symbol, parentClass, options);
+var cell = new Cell(symbol: String, parentClass: Remath, options: Object);
 
 #### .displayFormat
 
-A string that works with the numeral.js api. Determines what the .displayValue() method will return.
+A string that works with the numeral.js api. Determines what the .displayValue() method will return. Can be updated by simply assigning it. This will trigger reactions.
+
+```javascript
+cell.displayValue = '+0,0'
+```
 
 For example.
 
@@ -145,3 +143,23 @@ Adds a dependency to another cell, if that symbol can be found and is not alread
 #### ._scope()
 
 Returns an object with keys as symbols and values as the cells current value. used to pass into the mathjs eval method
+
+## Error Handling
+
+The remath library assumes it is accepting input from end users. End users can input formulas, symbols, names, etc. In general, any exception that is caused by an end user will be caught and any callbacks registered by the Remath.onAlert method will be called. On the other hand, if the library is implemented incorrectly by the developer, the exception will not be caught.
+
+A general rule of thumb is that an error in any public method will call the alert callbacks, and private methods will throw errors. This allows the public methods to catch the errors before they escape the library.
+
+## Running locally
+
+clone the repo
+
+`git clone https://github.com/trevorhanus/remath`
+
+install node modules
+
+`npm install`
+
+run the tests
+
+`npm run test`
