@@ -1,6 +1,7 @@
 import {observable, computed, map} from 'mobx';
 import {randomUuid} from './utils';
 import math from 'mathjs';
+import _ from 'underscore';
 import numeral from 'numeral';
 import {getFormatString} from './utils';
 import check from './check';
@@ -97,6 +98,32 @@ export default class Cell {
 
     } catch(e) {
       self._parentSheet._alert({type: 'error', message: e.message});
+    }
+  }
+
+  updateSymbol(newSymbol) {
+    try {
+
+      check(newSymbol, 'Cell.symbol');
+
+      // hold a reference to the old symbol
+      const oldSymbol = this.symbol;
+
+      // Update the symbol
+      this.symbol = newSymbol;
+
+      // Find all cells that reference this cell and update their formulas
+      // this will then trigger an update and will update their dependencies
+      this._parentSheet.cells.forEach(cell => {
+        if (cell._dependsOn(oldSymbol)) {
+          // Find the oldSymbol in the formula and replace it with the newSymbol
+          let oldFormula = cell.formula;
+          let newFormula = oldFormula.replace(oldSymbol, newSymbol);
+          cell.setFormula(newFormula);
+        }
+      });
+    } catch(e) {
+      this._parentSheet._alert({type: 'error', message: e.message});
     }
   }
 
