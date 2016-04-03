@@ -56,6 +56,23 @@ test('Alerts when trying to add a cell with symbol that starts with number', (t)
 
 });
 
+test('Calls alerts when trying to add formula without a symbol', (t) => {
+
+  var sheet = new Remath();
+
+  var called = 0;
+  sheet.onAlert(() => {
+    called++;
+  });
+
+  sheet.addCell();
+
+  t.equals(called, 1);
+
+  t.end();
+});
+
+
 test('Alerts when trying to add a cell with name that is not a string', (t) => {
   var sheet = new Remath();
   var called = 0;
@@ -66,6 +83,23 @@ test('Alerts when trying to add a cell with name that is not a string', (t) => {
   });
 
   var a = sheet.addCell('trevor', {name: 1});
+
+  setTimeout(function () {
+    t.equal(called, 1);
+    t.end();
+  });
+
+});
+
+test('Alerts when trying to add a cell with symbol with space', (t) => {
+  var sheet = new Remath();
+  var called = 0;
+
+  sheet.onAlert(function(alert) {
+    called++;
+  });
+
+  var a = sheet.addCell('trevo r');
 
   setTimeout(function () {
     t.equal(called, 1);
