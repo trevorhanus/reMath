@@ -6,7 +6,7 @@ checks['Cell.symbol'] =
   function(thing) {
     check.assert.assigned(thing, 'Symbol was not provided');
     check.assert.string(thing, 'Symbol must be a string');
-    check.assert.match(thing, /^(\D)(\w)*$/, 'Symbol can\'t start with a number');
+    check.assert.match(thing, /^(\D)(\w)*$/, '"' + thing + '" is not a valid symbol');
   };
 
 checks['Cell.name'] =

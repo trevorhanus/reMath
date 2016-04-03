@@ -60,3 +60,9 @@ test('Calls alerts when trying to update with an invalid symbol', (t) => {
 
   t.end();
 });
+
+test('', (t) => {
+  // TODO: when updating a symbol that includes a substring of a special math word, eg: sum or sqrt
+  // the library will error, because it trys to replace the substring of the special math word
+  t.end();
+})

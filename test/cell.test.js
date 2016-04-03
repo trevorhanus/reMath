@@ -43,7 +43,6 @@ test('Alerts when trying to add a cell with symbol that starts with number', (t)
   var called = 0;
 
   sheet.onAlert(function(alert) {
-    t.equal(alert.message, 'Symbol can\'t start with a number');
     called++;
   });
 
