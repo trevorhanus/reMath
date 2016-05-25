@@ -18,6 +18,18 @@ test('Alerts when creating a circular reference', (t) => {
   var c = sheet.addCell('c');
 
   // TODO: finish test
-  
+
+  t.end();
+});
+
+test('sets formula to 0, when empty string is passed', (t) => {
+
+  var sheet = new Remath();
+
+  var a = sheet.addCell('a');
+  a.setFormula('');
+
+  t.equal(a.value(), 0);
+
   t.end();
 });

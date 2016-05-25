@@ -1,4 +1,4 @@
-import {observable, extendObservable, computed, autorun} from 'mobx';
+import {observable, autorun} from 'mobx';
 import _ from 'underscore';
 import Cell from './Cell';
 import {randomUuid} from './utils';
@@ -19,7 +19,7 @@ export default class Remath {
     if (!symbol) throw new Error('must pass a symbol to find');
 
     let cell = _.findWhere(this.cells, {symbol: symbol});
-    
+
     if (!!cell) {
       return cell;
     } else {

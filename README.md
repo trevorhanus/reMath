@@ -126,6 +126,14 @@ Sets the formula. Takes a string that can reference any other symbols in the she
 
 Updates the cells symbol and traverses the entire sheet to find references to the cell and changes the symbol there as well.
 
+#### .customProps.set(key, value)
+
+Allows user to set a custom reactive property on the cell. This could be used for meta-data that needs to be stored on the cell.
+
+#### .customProps.get(key)
+
+Returns the value of the custom property. If the value is referenced in a reactive function (like autorun), then the function will be run again if the custom prop changes.
+
 ## Private API
 
 #### ._dependents is an Object{String: Cell}

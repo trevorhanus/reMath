@@ -11,11 +11,17 @@ export default class Cell {
   id;
   symbol;
   name;
+  type;
   _parentCalc;
 
   @observable displayFormat = '0,0';
   @observable _dependents = map();
   @observable formula = '';
+  @observable locked = false;
+  // Gravity payments calculator specific properties
+  @observable SFFieldName;
+  // Test a customProps parameter. Would allow users to set reactive custom props on any cell
+  @observable customProps = map();
 
   // A new cell should only ever be instantiated through the Remath.addCell method
   // Instantiating a cell directly, will not register the cell on the parent sheet
@@ -24,12 +30,16 @@ export default class Cell {
     if (!parentSheet) throw new Error('Could not create cell. Use the Remath.addCell method');
 
     // Assume the parameters have already been validated
-    const {name, formula, displayFormat} = options || {};
+    const {name, formula, displayFormat, type, locked, SFFieldName} = options || {};
 
     this.id = randomUuid();
     this.symbol = symbol;
     this.name = name || null;
+    this.type = type || null;
+    this.SFFieldName = SFFieldName;
     this._dependents = map();
+    this.customProps = map();
+    this.locked = locked || false;
     this._parentSheet = parentSheet;
     this.displayFormat = displayFormat || '0,0';
     if (!!formula) this.setFormula(formula);
@@ -51,10 +61,12 @@ export default class Cell {
 
   displayValue() {
     try {
-      if (isNaN(this.value())) {
+      if (isNaN(this.value()) || this.value() === '') {
         return 'error';
+      } else if (!isFinite(this.value())) {
+        return '#DIV/0!';
       } else {
-        return numeral(this.value()).format(this._displayFormat());
+        return numeral(this.value()).format(this.displayFormat);
       }
     } catch(e) {
       this._parentSheet._alert({type: 'error', message: e.message});
@@ -72,29 +84,34 @@ export default class Cell {
       // Verify formula is of valid type
       check(newFormula, 'Cell.formula')
 
-      // First we need to parse the formula into a nodeTree
-      var nodeTree = math.parse(newFormula);
+      if (newFormula === '') {
+        this._removeAllDependents();
+        this.formula = 0;
+      } else {
+        // First we need to parse the formula into a nodeTree
+        var nodeTree = math.parse(newFormula);
 
-      // Find all the symbolNodes
-      var symbols = {};
-      var symbolNodes = nodeTree.filter(function (node) {
-        if (node.isSymbolNode && !symbols[node.name]) {
-          symbols[node.name] = true;
-          return true;
-        }
-      });
+        // Find all the symbolNodes
+        var symbols = {};
+        var symbolNodes = nodeTree.filter(function (node) {
+          if (node.isSymbolNode && !symbols[node.name]) {
+            symbols[node.name] = true;
+            return true;
+          }
+        });
 
-      // Remove all previous dependents
-      this._removeAllDependents();
+        // Remove all previous dependents
+        this._removeAllDependents();
 
-      // Add a dependency for each of the symbolNodes
-      symbolNodes.forEach(function (node) {
-        let symbol = node.name;
-        self._addDependency(symbol);
-      });
+        // Add a dependency for each of the symbolNodes
+        symbolNodes.forEach(function (node) {
+          let symbol = node.name;
+          self._addDependency(symbol);
+        });
 
-      // Set the new formula
-      this.formula = newFormula;
+        // Set the new formula
+        this.formula = newFormula;
+      }
 
     } catch(e) {
       self._parentSheet._alert({type: 'error', message: e.message});
@@ -154,7 +171,7 @@ export default class Cell {
       const dep = this._parentSheet.find(symbol);
       this._dependents.set(symbol, dep);
     } else {
-      throw new Error('Could not find symbol: ' + symbol);
+      throw new Error('Could not find symbol: ' + symbol + '. When adding dependency for ' + this.symbol + ' with formula: ' + this.formula);
     }
   }
 

@@ -211,3 +211,24 @@ test('Does not allow duplicate symbols', (t) => {
   t.end();
 
 });
+
+test('Can set a reactive custom property on Cell', (t) => {
+
+  var sheet = new Remath();
+  var called = 0;
+
+  var a = sheet.addCell('a');
+  a.customProps.set('foo', 'bar');
+
+  sheet.autorun(function() {
+    called++;
+    a.customProps.get('foo');
+  });
+
+  a.customProps.set('foo', 'bar2');
+
+  t.equal(called, 2);
+
+  t.end();
+
+});
