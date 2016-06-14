@@ -1,6 +1,7 @@
 import {observable, autorun} from 'mobx';
 import _ from 'underscore';
 import Cell from './Cell';
+import TextCell from './TextCell';
 import {randomUuid} from './utils';
 import check from './check';
 
@@ -33,7 +34,11 @@ export default class Remath {
 
   addCell(symbol, options) {
     // Assume we have no control over what is passed in for the symbol and the options
-    const {name, formula, displayFormat} = options || {};
+    const {name, formula, displayFormat, type} = options || {};
+
+    if (type === 'text') {
+      return this._addTextCell(symbol, options);
+    }
 
     try {
       check(symbol, 'Cell.symbol');
@@ -98,6 +103,33 @@ export default class Remath {
   /**
    * Private Methods
    */
+
+   _addTextCell(symbol, options) {
+     // Assume we have no control over what is passed in for the symbol and the options
+     const {name, content} = options || {};
+
+     try {
+       check(symbol, 'Cell.symbol');
+       check(name, 'Cell.name');
+
+       // Make sure symbol does not exists
+       if (this._symbolDoesExist(symbol)) {
+         throw new Error(symbol + 'already exists');
+       };
+
+       let cell = new TextCell(symbol, this, options);
+       if (!!cell) {
+         this.cells.push(cell);
+         return cell;
+       } else {
+         throw new Error('Error creating a new cell');
+       }
+
+     } catch(e) {
+       this._alert({type: 'error', message: e.message});
+       return null;
+     }
+   }
 
    _alert(alert) {
      this._alertCallbacks.forEach(callback => {
