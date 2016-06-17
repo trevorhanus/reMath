@@ -34,3 +34,13 @@ test('Text cell\'s content is reactive', (t) => {
   t.equal(hasRun, 2);
   t.end();
 });
+
+test('Can get the value for a text cell', (t) => {
+  var sheet = new Remath();
+  var a = sheet.addCell('a', {type: 'text', content: 'Testing text cell'});
+
+  a.content = 'new content';
+
+  t.equal(a.value(), 'new content');
+  t.end();
+})
