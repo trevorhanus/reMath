@@ -43,4 +43,24 @@ test('Can get the value for a text cell', (t) => {
 
   t.equal(a.value(), 'new content');
   t.end();
-})
+});
+
+test('Copies textAlign when added', (t) => {
+  var sheet = new Remath();
+  var a = sheet.addCell('a', {type: 'text', content: 'Testing text cell', textAlign: 'center'});
+
+  a.content = 'new content';
+
+  t.equal(a.textAlign, 'center');
+  t.end();
+});
+
+test('Defaults textAlign to right', (t) => {
+  var sheet = new Remath();
+  var a = sheet.addCell('a', {type: 'text', content: 'Testing text cell'});
+
+  a.content = 'new content';
+
+  t.equal(a.textAlign, 'right');
+  t.end();
+});

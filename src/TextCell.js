@@ -10,9 +10,10 @@ export default class TextCell extends BaseCell {
     super(symbol, parentSheet, options);
 
     // Assume the parameters have already been validated
-    const {content} = options || {};
+    const {content, textAlign} = options || {};
 
     this.content = content || null;
+    this.textAlign = textAlign || 'right';
   }
 
   /**
