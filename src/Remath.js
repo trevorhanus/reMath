@@ -171,7 +171,13 @@ export default class Remath {
 
    _cellIsReferencedByOthers(symbol) {
      return _.reduce(this.cells, (isReferenced, cell) => {
-       return cell._dependsOn(symbol);
+       if (isReferenced) { return true; }
+
+       if (cell.type !== 'boolean' && cell.type !== 'text') {
+         return cell._dependsOn(symbol);
+       } else {
+         return false;
+       }
      }, false);
    }
 
