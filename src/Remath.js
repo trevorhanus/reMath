@@ -91,7 +91,7 @@ export default class Remath {
 
     // Now we need to find all cells that depend on this cell, and delete their references
     _.forEach(this.cells, (cell) => {
-      if (cell._dependsOn(symbol)) {
+      if (cell._dependsOn && cell._dependsOn(symbol)) {
         cell._removeDependent(symbol);
       }
     });
