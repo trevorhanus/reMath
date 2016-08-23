@@ -6,11 +6,11 @@ import check from './check';
 export default class BaseCell {
 
   id;
-  symbol;
   name;
   type;
   _parentSheet;
 
+  @observable symbol;
   @observable locked = false;
   // Gravity payments calculator specific properties
   @observable SFFieldName;

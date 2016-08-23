@@ -5,6 +5,7 @@ import BaseCell from './BaseCell.js';
 export default class TextCell extends BaseCell {
 
   @observable content = '';
+  @observable textAlign;
 
   constructor(symbol, parentSheet, options) {
     super(symbol, parentSheet, options);
