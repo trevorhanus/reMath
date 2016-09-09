@@ -112,7 +112,8 @@ export default class Cell extends BaseCell {
       // Find all cells that reference this cell and update their formulas
       // this will then trigger an update and will update their dependencies
       this._parentSheet.cells.forEach(cell => {
-        if (cell._dependsOn(oldSymbol)) {
+        const cellHasFormula = cell.formula != null;
+        if (cellHasFormula && cell._dependsOn(oldSymbol)) {
           // Find the oldSymbol in the formula and replace it with the newSymbol
           let oldFormula = cell.formula;
           let newFormula = oldFormula.replace(oldSymbol, newSymbol);

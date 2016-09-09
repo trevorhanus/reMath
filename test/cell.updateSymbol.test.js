@@ -34,6 +34,28 @@ test('Can update a cells symbol for nest cells', (t) => {
 
   t.equal(temp1.value(), 10);
   t.equal(sheet.find('temp1'), null);
+  t.equal(sheet.find('b').formula, 'a + 10');
+  t.equal(b.value(), 20);
+
+  t.end();
+});
+
+test('Can update a cells symbol when sheet contains boolean and text cells', (t) => {
+
+  var sheet = new Remath();
+
+  var bool = sheet.addCell('bool', {type: 'boolean', val: true});
+  var text = sheet.addCell('text', {type: 'text', content: 'Testing text cell'});
+  var temp1 = sheet.addCell('temp1', {formula: '10'});
+  var b = sheet.addCell('b', {formula: 'temp1 + 10'});
+
+  t.equal(b.value(), 20);
+
+  temp1.updateSymbol('a');
+
+  t.equal(temp1.value(), 10);
+  t.equal(sheet.find('temp1'), null);
+  t.equal(sheet.find('b').formula, 'a + 10');
   t.equal(b.value(), 20);
 
   t.end();
