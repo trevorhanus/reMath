@@ -1,12 +1,13 @@
 {
   "name": "remath",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "A reactive spreadsheet-like library",
   "main": "lib/Remath.js",
   "scripts": {
     "test": "npm run quick-build && npm run tape",
     "quick-build": "babel src --out-dir lib",
-    "tape": "tape test/**/*.js | faucet"
+    "tape": "tape test/**/*.js | faucet",
+    "prepublish": "npm run quick-build"
   },
   "repository": {
     "type": "git",
