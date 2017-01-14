@@ -25,3 +25,19 @@ test('Can remove a dependent cell', (t) => {
 
   t.end();
 });
+
+test('Can remove a cell when there are booleans and text cells', (t) => {
+  var sheet = new Remath();
+  var a = sheet.addCell('a');
+  var b = sheet.addCell('b', {formula: 'a + 5'});
+  var c = sheet.addCell('c', {type: 'boolean', val: true});
+  var d = sheet.addCell('d', {type: 'text', content: 'Testing text cell'});
+
+  // Remove b
+  sheet.removeCell('a');
+
+  t.equal(b._dependents.get('a'), undefined);
+  t.equal(b.value(), 'error');
+
+  t.end();
+});

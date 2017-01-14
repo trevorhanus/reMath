@@ -1,6 +1,8 @@
 import {observable, autorun} from 'mobx';
 import _ from 'underscore';
 import Cell from './Cell';
+import TextCell from './TextCell';
+import BooleanCell from './BooleanCell';
 import {randomUuid} from './utils';
 import check from './check';
 
@@ -32,9 +34,19 @@ export default class Remath {
    */
 
   addCell(symbol, options) {
-    // Assume we have no control over what is passed in for the symbol and the options
-    const {name, formula, displayFormat} = options || {};
 
+    const {type} = options || {};
+
+    if (type === 'text') {
+      return this._addTextCell(symbol, options);
+    }
+
+    if (type === 'boolean') {
+      return this._addBooleanCell(symbol, options);
+    }
+
+    const {name, formula, displayFormat} = options || {};
+    // If no type is given, default to a formula cell
     try {
       check(symbol, 'Cell.symbol');
       check(name, 'Cell.name');
@@ -63,7 +75,6 @@ export default class Remath {
   /**
    * Removes a cell from the sheet
    *
-   *
    */
   removeCell(symbol) {
     // Make sure the symbol exists
@@ -80,7 +91,7 @@ export default class Remath {
 
     // Now we need to find all cells that depend on this cell, and delete their references
     _.forEach(this.cells, (cell) => {
-      if (cell._dependsOn(symbol)) {
+      if (cell._dependsOn && cell._dependsOn(symbol)) {
         cell._removeDependent(symbol);
       }
     });
@@ -99,6 +110,59 @@ export default class Remath {
    * Private Methods
    */
 
+   _addBooleanCell(symbol, options) {
+     // Assume we have no control over what is passed in for the symbol and the options
+     const {val} = options || {};
+
+     try {
+       check(symbol, 'Cell.symbol');
+
+       // Make sure symbol does not exists
+       if (this._symbolDoesExist(symbol)) {
+         throw new Error(symbol + 'already exists');
+       };
+
+       let cell = new BooleanCell(symbol, this, options);
+       if (!!cell) {
+         this.cells.push(cell);
+         return cell;
+       } else {
+         throw new Error('Error creating a new cell');
+       }
+
+     } catch(e) {
+       this._alert({type: 'error', message: e.message});
+       return null;
+     }
+   }
+
+   _addTextCell(symbol, options) {
+     // Assume we have no control over what is passed in for the symbol and the options
+     const {name, content} = options || {};
+
+     try {
+       check(symbol, 'Cell.symbol');
+       check(name, 'Cell.name');
+
+       // Make sure symbol does not exists
+       if (this._symbolDoesExist(symbol)) {
+         throw new Error(symbol + 'already exists');
+       };
+
+       let cell = new TextCell(symbol, this, options);
+       if (!!cell) {
+         this.cells.push(cell);
+         return cell;
+       } else {
+         throw new Error('Error creating a new cell');
+       }
+
+     } catch(e) {
+       this._alert({type: 'error', message: e.message});
+       return null;
+     }
+   }
+
    _alert(alert) {
      this._alertCallbacks.forEach(callback => {
        callback(alert);
@@ -107,7 +171,13 @@ export default class Remath {
 
    _cellIsReferencedByOthers(symbol) {
      return _.reduce(this.cells, (isReferenced, cell) => {
-       return cell._dependsOn(symbol);
+       if (isReferenced) { return true; }
+
+       if (cell.type !== 'boolean' && cell.type !== 'text') {
+         return cell._dependsOn(symbol);
+       } else {
+         return false;
+       }
      }, false);
    }
 

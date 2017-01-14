@@ -1,4 +1,5 @@
 import {observable, computed, map} from 'mobx';
+import BaseCell from './BaseCell.js';
 import {randomUuid} from './utils';
 import math from 'mathjs';
 import _ from 'underscore';
@@ -6,41 +7,20 @@ import numeral from 'numeral';
 import {getFormatString} from './utils';
 import check from './check';
 
-export default class Cell {
-
-  id;
-  symbol;
-  name;
-  type;
-  _parentCalc;
+export default class Cell extends BaseCell {
 
   @observable displayFormat = '0,0';
   @observable _dependents = map();
   @observable formula = '';
-  @observable locked = false;
-  // Gravity payments calculator specific properties
-  @observable SFFieldName;
-  // Test a customProps parameter. Would allow users to set reactive custom props on any cell
-  @observable customProps = map();
 
-  // A new cell should only ever be instantiated through the Remath.addCell method
-  // Instantiating a cell directly, will not register the cell on the parent sheet
   constructor(symbol, parentSheet, options) {
-    // Throw an error if there is no parentSheet, this means that the Remath.addCell method was not used
-    if (!parentSheet) throw new Error('Could not create cell. Use the Remath.addCell method');
+    super(symbol, parentSheet, options);
 
     // Assume the parameters have already been validated
-    const {name, formula, displayFormat, type, locked, SFFieldName} = options || {};
+    const {formula, displayFormat, SFFieldName} = options || {};
 
-    this.id = randomUuid();
-    this.symbol = symbol;
-    this.name = name || null;
-    this.type = type || null;
-    this.SFFieldName = SFFieldName;
     this._dependents = map();
     this.customProps = map();
-    this.locked = locked || false;
-    this._parentSheet = parentSheet;
     this.displayFormat = displayFormat || '0,0';
     if (!!formula) this.setFormula(formula);
   }
@@ -132,7 +112,8 @@ export default class Cell {
       // Find all cells that reference this cell and update their formulas
       // this will then trigger an update and will update their dependencies
       this._parentSheet.cells.forEach(cell => {
-        if (cell._dependsOn(oldSymbol)) {
+        const cellHasFormula = cell.formula != null;
+        if (cellHasFormula && cell._dependsOn(oldSymbol)) {
           // Find the oldSymbol in the formula and replace it with the newSymbol
           let oldFormula = cell.formula;
           let newFormula = oldFormula.replace(oldSymbol, newSymbol);
