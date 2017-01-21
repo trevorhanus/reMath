@@ -1,5 +1,5 @@
 import {observable, autorun} from 'mobx';
-import _ from 'underscore';
+import * as _ from 'underscore';
 import Cell from './Cell';
 import TextCell from './TextCell';
 import BooleanCell from './BooleanCell';

@@ -1,0 +1,19 @@
+{
+  "cells": [
+    {
+      "type": "formula",
+      "symbol": "a",
+      "value": "=3"
+    },
+    {
+      "type": "formula",
+      "symbol": "b",
+      "value": "=4"
+    },
+    {
+      "type": "formula",
+      "symbol": "c",
+      "value": "=sqrt(a^2 + b^2)"
+    }
+  ]
+}
