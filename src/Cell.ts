@@ -1,7 +1,7 @@
 import {observable, ObservableMap, asMap, computed, autorun, action} from 'mobx';
 import * as math from 'mathjs';
 import {CellError, ErrorJSON, CellErrorType} from './CellError';
-import {getValueType, cleanFormula} from './utils/regex';
+import {getValueType, cleanFormula, isValidSymbol} from './utils/regex';
 import {uniq as _uniq} from 'underscore';
 import Remath from './';
 import {v4} from 'uuid';
@@ -11,6 +11,7 @@ export class Cell {
   private _graph: Remath;
   @observable protected _error: CellError;
   @observable private _symbol: string;
+  @observable private _tempInvalidSymbol: string;
   @observable private _value: string;
   @observable private _formula: string;
   @observable protected _locked: boolean;
@@ -21,6 +22,7 @@ export class Cell {
     this._id = v4();
     this._graph = graph;
     this._error = new CellError();
+    this._tempInvalidSymbol = null;
     this.setSymbol(options.symbol);
     this.setValue(options.value);
     this._locked = options.locked !== undefined ? options.locked : false;
@@ -35,7 +37,11 @@ export class Cell {
 
   @computed
   get symbol(): string {
-    return this._symbol;
+    if (this._tempInvalidSymbol !== null) {
+      return this._tempInvalidSymbol;
+    } else {
+      return this._symbol;
+    }
   }
 
   @computed
@@ -44,9 +50,31 @@ export class Cell {
   }
 
   @action
-  setSymbol(symbol: string): void {
-    this.validateSymbol(symbol);
-    this._symbol = symbol;
+  setSymbol(newSymbol: string): void {
+    newSymbol = newSymbol.trim();
+    const oldSymbol = this._symbol;
+
+    if (!isValidSymbol(newSymbol)) {
+      this.raiseInvalidSymbolError(newSymbol);
+      this._tempInvalidSymbol = newSymbol;
+      return;
+    } else {
+      if (this.hasError && this._error.type === CellErrorType.INVALID_SYMBOL) {
+        this._error.clear();
+      }
+      this._symbol = newSymbol;
+
+      // need to replace old symbol in any formulas that reference it
+      this._graph.cells.forEach(cell => {
+        if (cell.dependsOn(oldSymbol)) {
+          const oldFormula = cell._formula;
+          const newFormula = oldFormula.replace(oldSymbol, newSymbol);
+          const newValue = `= ${newFormula}`;
+          cell.setValue(newValue);
+        }
+      });
+      
+    }
   }
 
   @action
@@ -70,7 +98,11 @@ export class Cell {
   @computed
   public get value(): string | number | boolean {
     if (this._value !== null) {
-      return this._value;
+      if (this.hasError) {
+        return this._error.message;
+      } else {
+        return this._value;
+      }
     } else {
       const formula = this._formula;
       if (formula === '') {
@@ -104,7 +136,29 @@ export class Cell {
       return node.name; 
     });
 
+    const circularReference = this.createsCircularReference(newReferencedSymbols);
+    
+    if (circularReference) {
+      this._error.set({
+        type: CellErrorType.REF_CIRCULAR,
+        message: `'${formula}' creates a circular reference`
+      });
+      return;
+    }
+
     this._formula = formula;
+  }
+
+  private createsCircularReference(symbols: string[]): boolean {
+    const currentCellSymbol = this.symbol;
+    return symbols.some(symbol => {
+      const referencedCell = this._graph.find(symbol);
+      if (referencedCell) {
+        return referencedCell.dependsOn(currentCellSymbol);
+      } else {
+        return false;
+      }
+    });
   }
 
   @action
@@ -190,7 +244,7 @@ export class Cell {
   }
 
   private watchForErrorInValue(): void {
-    if (isNaN(this.value)) {
+    if (isNaN(this.value as number) && !this.hasError) {
       this._error.set({
         type: CellErrorType.REF_NOT_FOUND,
         message: 'Error in one of the references'
@@ -198,16 +252,11 @@ export class Cell {
     }
   }
 
-  private validateSymbol(symbol: string): void {
-    const regex = /^(\D)(\w)*$/;
-    if (!regex.test(symbol)) {
-      this._error.set({
-        type: CellErrorType.INVALID_SYMBOL,
-        message: `Symbol: \`${symbol}\` is not a valid symbol. Symbols can only include alphanumeric characters including the underscore.`
-      });
-    } else {
-      this._error.clear();
-    }
+  private raiseInvalidSymbolError(badSymbol: string): void {
+    this._error.set({
+      type: CellErrorType.INVALID_SYMBOL,
+      message: `Symbol: \`${badSymbol}\` is not a valid symbol. Symbols can only include alphanumeric characters including the underscore.`
+    });
   }
 }
 

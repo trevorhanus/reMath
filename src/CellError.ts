@@ -12,7 +12,6 @@ export class CellError {
   @computed
   get displayValue(): string {
     const index = this._type;
-    console.log(index);
     return ErrorTypeToDisplayValueMap[index];
   }
 
@@ -49,5 +48,7 @@ export enum CellErrorType {
 }
 
 const ErrorTypeToDisplayValueMap: ({[index: string]: string}) = {
-  '0': '#SYM!'
+  '0': '#SYM!',
+  '1': '#REF?',
+  '2': '#CIRC!'
 }

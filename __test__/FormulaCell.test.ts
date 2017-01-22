@@ -1,27 +1,15 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
+import {CellErrorType} from '../src/CellError';
 import Remath from '../src';
-import * as math from 'mathjs';
 
 describe('Formula Cell', () => {
-
   it('instantiates', () => {
     const remath = new Remath();
     const a = remath.addCell({
       symbol: 'a'
     });
-    a.setValue('b + c + 10');
     expect(a.symbol).toBe('a');
-  });
-
-  it('boolean', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
-      symbol: 'a',
-      value: '= true'
-    });
-    expect(a.value).toBe(true);
-    expect(a.displayValue).toBe('true');
   });
 
   it('knows when it has dependents', () => {
@@ -109,41 +97,5 @@ describe('Formula Cell', () => {
       value: '= 100'
     });
     expect(renderSpy.callCount).toBe(2);
-  });
-
-  it('can find a circular reference', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
-      symbol: 'a',
-      value: '= 10'
-    });
-    a.setValue('= a');
-    const b = remath.addCell({
-      symbol: 'b',
-      value: '= a + 10'
-    });
-    const c = remath.addCell({
-      symbol: 'c',
-      value: '= b + a'
-    });
-    const d = remath.addCell({
-      symbol: 'd',
-      value: '= c + a'
-    });
-    c.setValue('d + a');
-  });
-
-  it('can update a symbol when other cells depend on it', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
-      symbol: 'temp',
-      value: '= 10'
-    });
-    const b = remath.addCell({
-      symbol: 'b',
-      value: '= temp + 10'
-    });
-
-    a.setSymbol('a');
   });
 });
