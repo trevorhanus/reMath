@@ -1,11 +1,11 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
-import Remath from '../src';
+import {Graph} from '../src/Graph';
 
 describe('Boolean Cell', () => {
   it('can add a false cell', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= false'
     });
@@ -13,8 +13,8 @@ describe('Boolean Cell', () => {
   });
 
   it('can add a true cell', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= true'
     });
@@ -23,8 +23,8 @@ describe('Boolean Cell', () => {
   });
 
   it('can change value', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= false'
     });

@@ -1,30 +1,35 @@
-import {observable, ObservableMap, computed, action} from 'mobx';
-import {Cell, Options} from './Cell';
+import {observable, ObservableMap, computed, action, observe, IReactionDisposer} from 'mobx';
+import {BaseCell, Options} from './BaseCell';
 import * as messages from './Messages';
+import {matchesIdFormat} from './utils/regex';
 
-export default class Remath {
-  @observable private _cells: ObservableMap<Cell>;
+export class Graph {
+  @observable private _cells: ObservableMap<BaseCell>;
   private _messages: messages.Messages;
   private _symbolToIdMap: ({[symbol: string]: string});
 
   constructor() {
-    this._cells = observable.map<Cell>();
+    this._cells = observable.map<BaseCell>();
     this._messages = new messages.Messages();
     this._symbolToIdMap = {};
   }
 
   @computed
-  get cells(): Cell[] {
+  get cells(): BaseCell[] {
     return this._cells.values();
   }
 
-  find(symbol: string): Cell {
-    const id = this.getId(symbol);
-    return this._cells.get(id);
-  }
-
-  findById(id: string): Cell {
-    return this._cells.get(id);
+  find(symbolOrId: string): BaseCell {
+    let cell: BaseCell;
+    const probablyAnId = matchesIdFormat(symbolOrId);
+    if (probablyAnId) {
+      cell = this._cells.get(symbolOrId);
+    }
+    if (cell === undefined) {
+      const id = this.getId(symbolOrId);
+      cell = this._cells.get(id);
+    }
+    return cell;
   }
 
   symbolExists(symbol: string): boolean {
@@ -41,7 +46,7 @@ export default class Remath {
   }
 
   @action
-  addCell(options: Options): Cell {
+  addCell(options: Options): BaseCell {
     const {symbol} = options;
     if (this.symbolExists(symbol)) {
       this._messages.add({
@@ -50,8 +55,8 @@ export default class Remath {
       });
       return;
     }
-    const newCell = new Cell(options, this);
-    this.setId(symbol, newCell.id);
+    const newCell = new BaseCell(options, this);
+    this.mapSymbol(symbol, newCell.id);
     this._cells.set(newCell.id, newCell);
     return newCell;
   }
@@ -63,14 +68,15 @@ export default class Remath {
       return;
     }
 
-    if (this.cellIsReferencedByOthers(symbol)) {
+    const id = this.getId(symbol);
+    if (this.cellIsReferencedByOthers(id)) {
       this._messages.add({
         type: messages.Type.WARNING,
         content: `Removing cell with symbol \`${symbol}\` whose value is referenced by other cells.`
       });
     }
-    const id = this.getId(symbol);
     this._cells.delete(id);
+    delete this._symbolToIdMap[symbol];
   }
 
   @computed
@@ -83,10 +89,10 @@ export default class Remath {
     this._messages.remove(id);
   }
 
-  private cellIsReferencedByOthers(symbol: string): boolean {
+  private cellIsReferencedByOthers(id: string): boolean {
     const cells = this._cells.values();
     return cells.some(cell => {
-      return cell.dependsOn(symbol);
+      return cell.dependsOn(id);
     });
   }
 
@@ -94,12 +100,22 @@ export default class Remath {
     return this._symbolToIdMap[symbol];
   }
 
-  private setId(symbol: string, id: string): void {
+  public getSymbol(id: string): string {
+    const cell = this._cells.get(id);
+    if (cell) {
+      return cell.symbol;
+    } else {
+      return null;
+    }
+  }
+
+  private mapSymbol(symbol: string, id: string): void {
     this._symbolToIdMap[symbol] = id;
   }
 
   public updateSymbolToIdMap(oldSymbol: string, newSymbol: string): void {
     const id = this.getId(oldSymbol);
-    this.setId(newSymbol, id);
+    this.mapSymbol(newSymbol, id);
+    delete this._symbolToIdMap[oldSymbol];
   }
 }

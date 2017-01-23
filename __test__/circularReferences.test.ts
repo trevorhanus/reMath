@@ -1,38 +1,38 @@
 import * as sinon from 'sinon';
-import {CellErrorType} from '../src/CellError';
-import Remath from '../src';
+import * as error from '../src/errors/CellError';
+import {Graph} from '../src/Graph';
 
 describe('Circular Reference', () => {
   it('catches a simple circular reference', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= 10'
     });
     a.setValue('= a')
+    expect(a.displayValue).toBe('#CIRC!');
   });
 
   it('catches a complicated circular reference', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= 10'
     });
-    const b = remath.addCell({
+    const b = graph.addCell({
       symbol: 'b',
       value: '= a + 10'
     });
-    const c = remath.addCell({
+    const c = graph.addCell({
       symbol: 'c',
-      value: '= b + a'
+      value: '= b'
     });
-    const d = remath.addCell({
+    const d = graph.addCell({
       symbol: 'd',
-      value: '= c + b'
+      value: '= c'
     });
-    c.setValue('= d + a');
-    expect(c.hasError).toBe(true);
-    expect(c.error.type).toBe(CellErrorType.REF_CIRCULAR);
-    expect(c.displayValue).toBe('#CIRC!');
+    a.setValue('= d');
+    expect(a.hasError).toBe(true);
+    expect(a.displayValue).toBe('#CIRC!');
   });
 });

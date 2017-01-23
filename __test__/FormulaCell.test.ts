@@ -1,28 +1,28 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
-import {CellErrorType} from '../src/CellError';
-import Remath from '../src';
+import * as error from '../src/errors/CellError';
+import {Graph} from '../src/Graph';
 
 describe('Formula Cell', () => {
   it('instantiates', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a'
     });
     expect(a.symbol).toBe('a');
   });
 
   it('knows when it has dependents', () => {
-    const remath = new Remath();
+    const remath = new Graph();
     const a = remath.addCell({
       symbol: 'a'
     });
     a.setValue('= b + c + 10');
-    expect(a.hasDependents).toBe(true);
+    expect(a.hasDependencies).toBe(true);
   });
 
   it('knows when it depends on a symbol', () => {
-    const remath = new Remath();
+    const remath = new Graph();
     const a = remath.addCell({
       symbol: 'a'
     });
@@ -32,13 +32,26 @@ describe('Formula Cell', () => {
     expect(a.dependsOn('not')).toBe(false);
   });
 
-  it('updates value when dependent value changes', () => {
-    const remath = new Remath();
+  it('evaluates', () => {
+    const remath = new Graph();
     const a = remath.addCell({
       symbol: 'a'
     });
-    a.setValue('10');
+    a.setValue('= 10');
     const b = remath.addCell({
+      symbol: 'b',
+      value: '= a + 10'
+    });
+    expect(b.value).toBe(20);
+  });
+
+  it('updates value when dependent value changes', () => {
+    const graph = new Graph();
+    const a = graph.addCell({
+      symbol: 'a'
+    });
+    a.setValue('= 10');
+    const b = graph.addCell({
       symbol: 'b',
       value: '= a + 10'
     });
@@ -46,13 +59,13 @@ describe('Formula Cell', () => {
       b.value;
     });
     autorun(renderSpy);
-    a.setValue('11');
+    a.setValue('= 11');
     expect(renderSpy.callCount).toBe(2);
     expect(b.value).toBe(21);
   });
 
   it('Can add `b = a + 10` when `a` does not exist', () => {
-    const remath = new Remath();
+    const remath = new Graph();
     // add b = a + 10
     const b = remath.addCell({
       symbol: 'b',
@@ -70,7 +83,7 @@ describe('Formula Cell', () => {
   });
 
   it('re-renders `b = a + 10` when `a` is added to sheet', () => {
-    const remath = new Remath();
+    const remath = new Graph();
 
     // add b which depends on a, but a does not exist
     const b = remath.addCell({

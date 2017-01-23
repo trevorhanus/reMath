@@ -1,12 +1,12 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
-import {CellErrorType} from '../src/CellError';
-import Remath from '../src';
+import * as error from '../src/errors/CellError';
+import {Graph} from '../src/Graph';
 
 describe('Reference Not Found', () => {
   it('simple reference does not exist', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= 10'
     });
@@ -16,30 +16,30 @@ describe('Reference Not Found', () => {
   });
 
   it('reference is removed', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= 10'
     });
-    const b = remath.addCell({
+    const b = graph.addCell({
       symbol: 'b',
       value: '= a + 10'
     });
     expect(b.value).toBe(20);
 
     // remove a from sheet
-    remath.removeCell('a');
+    graph.removeCell('a');
     expect(b.value).toEqual(NaN);
     expect(b.displayValue).toEqual('#REF?');
   });
 
   it('rerenders when reference is removed', () => {
-    const remath = new Remath();
-    const a = remath.addCell({
+    const graph = new Graph();
+    const a = graph.addCell({
       symbol: 'a',
       value: '= 10'
     });
-    const b = remath.addCell({
+    const b = graph.addCell({
       symbol: 'b',
       value: '= a + 10'
     });
@@ -47,7 +47,7 @@ describe('Reference Not Found', () => {
       b.displayValue;
     });
     autorun(renderSpy);
-    remath.removeCell('a');
+    graph.removeCell('a');
     const expectedCallCount = 3;
      // 1) when autorun is executed for the first time
      // 2) when value changes to NaN because `b` can't find the value of `a`
