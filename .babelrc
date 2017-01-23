@@ -1,9 +1,0 @@
-{
-  "presets": ["stage-0", "es2015"],
-  "plugins": [
-    "transform-decorators-legacy",
-    "transform-es2015-modules-commonjs",
-    "transform-es2015-destructuring",
-    "transform-class-properties"
-  ]
-}
