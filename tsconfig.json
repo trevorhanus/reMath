@@ -7,10 +7,13 @@
     "removeComments": true,
     "experimentalDecorators": true,
     "preserveConstEnums": true,
-    "outDir": "./build",
+    "outDir": "./dist",
     "sourceMap": true,
     "pretty": true,
-    "declaration": true
+    "declaration": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "src/**/*"

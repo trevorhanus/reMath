@@ -8,7 +8,7 @@ describe('Base Cell', () => {
     const cell = new BaseCell({
       symbol: 'a'
     }, graph);
-    expect(cell.id).toBeTruthy();
+    expect(cell.hash).toBeTruthy();
   });
 
   it('sets the symbol on instantiation', () => {

@@ -1,4 +1,5 @@
 import {observable, ObservableMap, computed, action, observe, IReactionDisposer} from 'mobx';
+import hasher from './utils/Hasher';
 import {BaseCell, Options} from './BaseCell';
 import * as messages from './Messages';
 import {matchesIdFormat} from './utils/regex';
@@ -6,12 +7,10 @@ import {matchesIdFormat} from './utils/regex';
 export class Graph {
   @observable private _cells: ObservableMap<BaseCell>;
   private _messages: messages.Messages;
-  private _symbolToIdMap: ({[symbol: string]: string});
 
   constructor() {
     this._cells = observable.map<BaseCell>();
     this._messages = new messages.Messages();
-    this._symbolToIdMap = {};
   }
 
   @computed
@@ -19,22 +18,22 @@ export class Graph {
     return this._cells.values();
   }
 
-  find(symbolOrId: string): BaseCell {
+  public find(symbolOrHash: string): BaseCell {
     let cell: BaseCell;
-    const probablyAnId = matchesIdFormat(symbolOrId);
+    const probablyAnId = matchesIdFormat(symbolOrHash);
     if (probablyAnId) {
-      cell = this._cells.get(symbolOrId);
+      cell = this._cells.get(symbolOrHash);
     }
     if (cell === undefined) {
-      const id = this.getId(symbolOrId);
-      cell = this._cells.get(id);
+      const hash = hasher.getHash(symbolOrHash);
+      cell = this._cells.get(hash) || null;
     }
     return cell;
   }
 
   symbolExists(symbol: string): boolean {
-    const id = this.getId(symbol);
-    return this._cells.has(id);
+    const hash = hasher.getHash(symbol);
+    return this._cells.has(hash);
   }
 
   @action
@@ -56,8 +55,7 @@ export class Graph {
       return;
     }
     const newCell = new BaseCell(options, this);
-    this.mapSymbol(symbol, newCell.id);
-    this._cells.set(newCell.id, newCell);
+    this._cells.set(newCell.hash, newCell);
     return newCell;
   }
 
@@ -68,15 +66,14 @@ export class Graph {
       return;
     }
 
-    const id = this.getId(symbol);
-    if (this.cellIsReferencedByOthers(id)) {
+    const hash = hasher.getHash(symbol);
+    if (this.cellIsReferencedByOthers(hash)) {
       this._messages.add({
         type: messages.Type.WARNING,
         content: `Removing cell with symbol \`${symbol}\` whose value is referenced by other cells.`
       });
     }
-    this._cells.delete(id);
-    delete this._symbolToIdMap[symbol];
+    this._cells.delete(hash);
   }
 
   @computed
@@ -89,33 +86,19 @@ export class Graph {
     this._messages.remove(id);
   }
 
-  private cellIsReferencedByOthers(id: string): boolean {
+  private cellIsReferencedByOthers(hash: string): boolean {
     const cells = this._cells.values();
     return cells.some(cell => {
-      return cell.dependsOn(id);
+      return cell.dependsOn(hash);
     });
   }
 
-  getId(symbol: string): string {
-    return this._symbolToIdMap[symbol];
-  }
-
-  public getSymbol(id: string): string {
-    const cell = this._cells.get(id);
+  public getSymbol(hash: string): string {
+    const cell = this._cells.get(hash);
     if (cell) {
       return cell.symbol;
     } else {
       return null;
     }
-  }
-
-  private mapSymbol(symbol: string, id: string): void {
-    this._symbolToIdMap[symbol] = id;
-  }
-
-  public updateSymbolToIdMap(oldSymbol: string, newSymbol: string): void {
-    const id = this.getId(oldSymbol);
-    this.mapSymbol(newSymbol, id);
-    delete this._symbolToIdMap[oldSymbol];
   }
 }

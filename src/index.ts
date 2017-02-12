@@ -2,7 +2,7 @@ import {Graph} from './Graph';
 import {BaseCell, Options} from './BaseCell';
 import {Message} from './Messages';
 
-export default class Remath {
+class Remath {
   private _graph: Graph;
 
   constructor() {
@@ -13,11 +13,15 @@ export default class Remath {
     return this._graph.find(symbolOrId);
   }
 
+  public get cells(): BaseCell[] {
+    return this._graph.cells;
+  }
+
   public symbolExists(symbol: string): boolean {
     return this._graph.symbolExists(symbol);
   }
 
-  public addCell(options: AddCellOptions): BaseCell {
+  public addCell(options: any): BaseCell {
     return this._graph.addCell(options);
   }
 
@@ -40,4 +44,7 @@ export default class Remath {
   }
 }
 
-export interface AddCellOptions extends Options {}
+export {
+  BaseCell as Cell,
+  Remath
+}

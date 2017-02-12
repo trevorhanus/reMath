@@ -1,6 +1,7 @@
 import {observable, computed, action} from 'mobx';
 import {isValidSymbol} from './utils/regex';
 import {Graph} from './Graph';
+import hasher from './utils/Hasher';
 import {BaseCell} from './BaseCell';
 import * as error from './errors/CellError';
 
@@ -37,8 +38,10 @@ export class Symbol {
       this._tempInvalidSymbol = newSymbol;
       return;
     }
-
-    this._parentCell._graph.updateSymbolToIdMap(this._symbol, newSymbol);
+    const oldSymbol = this._symbol;
+    if (oldSymbol !== null && oldSymbol !== undefined) {
+      hasher.swapKeys(oldSymbol, newSymbol);
+    }
     this._symbol = newSymbol;
   }
 }

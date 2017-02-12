@@ -1,18 +1,16 @@
 {
   "name": "remath",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "A reactive spreadsheet-like library",
-  "main": "lib/Remath.js",
+  "main": "dist/index.js",
+  "types": "dist/index",
   "scripts": {
-    "test": "npm run quick-build && npm run tape",
-    "jest": "jest --watch",
-    "quick-build": "babel src --out-dir lib",
-    "tape": "tape test/**/*.js | faucet",
-    "prepublish": "npm run quick-build"
+    "test": "jest --watch",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/trevorhanus/recalc.git"
+    "url": "https://github.com/trevorhanus/reMath.git"
   },
   "keywords": [
     "calculations",

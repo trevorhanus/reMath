@@ -1,7 +1,7 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
 import {Graph} from '../src/Graph';
-import {genId} from '../src/utils/id';
+import hasher from '../src/utils/Hasher';
 
 describe('Graph', () => {
 
@@ -13,15 +13,15 @@ describe('Graph', () => {
     expect(graph.find('a')).toEqual(a);
   });
 
-  it('find by id', () => {
+  it('find by hash', () => {
     const graph = new Graph();
     const a = graph.addCell({
       symbol: 'a'
     });
-    expect(graph.find(a.id)).toEqual(a);
+    expect(graph.find(a.hash)).toEqual(a);
   });
 
-  it('find by id with 2 cells', () => {
+  it('find by hash with 2 cells', () => {
     const graph = new Graph();
     const a = graph.addCell({
       symbol: 'a'
@@ -29,17 +29,17 @@ describe('Graph', () => {
     const b = graph.addCell({
       symbol: 'b'
     });
-    expect(graph.find(a.id)).toEqual(a);
+    expect(graph.find(a.hash)).toEqual(a);
   });
 
-  it('find => undefined when no symbol', () => {
+  it('find => null when no symbol', () => {
     const graph = new Graph();
-    expect(graph.find('a')).toBeUndefined();
+    expect(graph.find('a')).toBeNull();
   });
 
-  it('find => undefined when no id', () => {
+  it('find => null when no hash', () => {
     const graph = new Graph();
-    expect(graph.find(genId())).toBeUndefined();
+    expect(graph.find(hasher.getHash('none'))).toBeNull();
   });
 
   it('returns a list of cells', () => {
@@ -81,8 +81,8 @@ describe('Graph', () => {
     graph.removeCell('a');
     expect(graph.cells.length).toBe(0);
     expect(graph.symbolExists('a')).toBe(false);
-    expect(graph.find(a.id)).toBeUndefined();
-    expect(graph.find('a')).toBeUndefined();
+    expect(graph.find(a.hash)).toBeNull();
+    expect(graph.find('a')).toBeNull();
   });
 
   it('reacts when a dependent cell is removed', () => {

@@ -24,7 +24,7 @@ describe('Formula Cell', () => {
   it('knows when it depends on a symbol', () => {
     const remath = new Graph();
     const a = remath.addCell({
-      symbol: 'a'
+      symbol: 'stop'
     });
     a.setValue('= b + c + 10');
     expect(a.dependsOn('b')).toBe(true);
@@ -55,13 +55,13 @@ describe('Formula Cell', () => {
       symbol: 'b',
       value: '= a + 10'
     });
-    const renderSpy = sinon.spy(() => {
-      b.value;
-    });
-    autorun(renderSpy);
+    let view: string;
+    autorun(() => {
+      view = '' + b.value;
+    })
+    expect(view).toBe('20');
     a.setValue('= 11');
-    expect(renderSpy.callCount).toBe(2);
-    expect(b.value).toBe(21);
+    expect(view).toBe('21');
   });
 
   it('Can add `b = a + 10` when `a` does not exist', () => {
@@ -79,6 +79,7 @@ describe('Formula Cell', () => {
       symbol: 'a',
       value: '= 10'
     });
+    b.setValue('= a + 10');
     expect(b.value).toBe(20);
   });
 
@@ -87,28 +88,21 @@ describe('Formula Cell', () => {
 
     // add b which depends on a, but a does not exist
     const b = remath.addCell({
-      symbol: 'b',
+      symbol: 'derp',
       value: '= a + 10'
     });
 
-    // set up render spy
-    const renderSpy = sinon.spy(() => {
-      b.value;
+    let view: string;
+    autorun(() => {
+      view = `b:${b.value}`;
     });
-    autorun(renderSpy);
+    expect(view).toBe('b:NaN');
 
-    // add a, should re-render
+    // add a
     const a = remath.addCell({
       symbol: 'a',
       value: '= 10'
     });
-    expect(renderSpy.callCount).toBe(2);
-
-    // add c, which is independent, should not render
-    const c = remath.addCell({
-      symbol: 'c',
-      value: '= 100'
-    });
-    expect(renderSpy.callCount).toBe(2);
+    expect(view).toBe('b:20');
   });
 });

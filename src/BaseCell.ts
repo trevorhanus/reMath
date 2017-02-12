@@ -2,22 +2,23 @@ import {observable, computed, autorun, action} from 'mobx';
 import * as errors from './errors/CellErrors';
 import * as error from './errors/CellError';
 import {getValueType} from './utils/regex';
-import {genId} from './utils/id';
+import hasher from './utils/Hasher';
 import {Formula} from './Formula';
 import {Symbol} from './Symbol';
 import {Graph} from './Graph';
 
 export class BaseCell {
-  private _id: string;
+  private _hash: string;
   private _graph: Graph;
-  public _errors: errors.CellErrors;
+  private _errors: errors.CellErrors;
   private _symbol: Symbol;
   @observable private _textValue: string;
   @observable private _formula: Formula;
   @observable private _locked: boolean;
 
   constructor(options: Options, graph: Graph) {
-    this._id = genId();
+    const {symbol} = options;
+    this._hash = hasher.getHash(symbol);
     this._graph = graph;
     this._errors = new errors.CellErrors();
     this._symbol = new Symbol(options.symbol, this);
@@ -27,8 +28,8 @@ export class BaseCell {
   }
 
   @computed
-  get id(): string {
-    return this._id;
+  get hash(): string {
+    return this._hash;
   }
 
   @computed
@@ -46,8 +47,8 @@ export class BaseCell {
     return this._formula.hasDependencies;
   }
 
-  public dependsOn(symbolOrId: string): boolean {
-    return this._formula.dependsOn(symbolOrId);
+  public dependsOn(symbolOrHash: string): boolean {
+    return this._formula.dependsOn(symbolOrHash);
   }
 
   @computed
@@ -134,10 +135,11 @@ export class BaseCell {
 
   @computed
   public get displayValue(): string {
+    const value = this.value.toString(); // always get value so we react when it changes
     if (this.hasError) {
       return this._errors.displayValue;
     } else {
-      return this.value.toString();
+      return value;
     }
   }
 }

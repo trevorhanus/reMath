@@ -2,7 +2,10 @@ import {observable, ObservableMap, action, computed, autorun, reaction} from 'mo
 import * as regex from './utils/regex';
 import {Graph} from './Graph';
 import {BaseCell} from './BaseCell';
+import {Type} from './errors/CellError';
 import * as math from 'mathjs';
+import {matchesIdFormat} from './utils/regex';
+import hasher from './utils/Hasher';
 
 export class Formula {
   private _graph: Graph;
@@ -41,7 +44,7 @@ export class Formula {
     if (this._tempInvalidFormula !== null) {
       return this._tempInvalidFormula;
     } else {
-      const treeRootWithSymbols = this.exprTree.transform(this.transformIdToSymbol.bind(this));
+      const treeRootWithSymbols = this.exprTree.transform(this.transformHashToSymbol.bind(this));
       return '= ' + treeRootWithSymbols.toString();
     }
   }
@@ -59,10 +62,10 @@ export class Formula {
   }
 
   @computed
-  private get exprTree(): Node {
+  private get exprTree(): mathjs.MathNode {
     const formula = this._formula;
     const treeRoot = math.parse(formula);
-    return treeRoot.transform(this.transformSymbolToId.bind(this));
+    return treeRoot.transform(this.transformSymbolToHash.bind(this));
   }
 
   @computed
@@ -99,13 +102,16 @@ export class Formula {
     });
   }
 
-  public dependsOn(symbolOrId: string): boolean {
-    if (!this.exprTree) {
-      return false;
-    }
+  public dependsOn(symbolOrHash: string): boolean {
+    if (!this.exprTree) return false;
+    const isHash = matchesIdFormat(symbolOrHash);
+    const symbol = isHash ? hasher.getKey(symbolOrHash) : symbolOrHash;
+
     let dependsOn = false;
-    this.traverseDependencies(dependencySymbolOrId => {
-      if (symbolOrId === dependencySymbolOrId) {
+    this.traverseDependencies(dependencySymbolOrHash => {
+      const isHash = matchesIdFormat(dependencySymbolOrHash);
+      const depSymbol = isHash ? hasher.getKey(dependencySymbolOrHash): dependencySymbolOrHash;
+      if (symbol === depSymbol) {
         dependsOn = true;
       }
     });
@@ -123,42 +129,40 @@ export class Formula {
   }
 
   private findCircularReferences(treeRoot: Node): BaseCell[] {
-    return treeRoot.filter((node: Node) => {
+    let refs: BaseCell[] = [];
+    treeRoot.filter((node: Node) => {
       return node.isSymbolNode
-    }).reduce((cells: BaseCell[], node: Node) => {
+    }).forEach((node: Node) => {
       const cell = this._graph.find(node.name);
-      if (node.name === this._parentCell.id || node.name === this._parentCell.symbol) {
-        return cells.concat(cell);
+      if (node.name === this._parentCell.hash || node.name === this._parentCell.symbol) {
+        if (cell !== null) {
+          refs.push(cell);
+        }
       }
-      if (cell && cell.dependsOn(this._parentCell.id)) {
-        return cells.concat(cell);
-      } else {
-        return cells;
+      if (cell !== null && cell.dependsOn(this._parentCell.hash)) {
+        refs.push(cell);
       }
-    }, []);
+    });
+    return refs;
   }
 
-  private transformSymbolToId(node: Node): mathjs.MathNode {
+  private transformSymbolToHash(node: mathjs.MathNode): mathjs.MathNode {
     if (!node.isSymbolNode) {
       return node;
     }
     const symbol = node.name;
+    const hash = hasher.getHash(symbol);
     const newNode: mathjs.MathNode = node.clone();
-    const id = this._graph.getId(symbol);
-    if (id) {
-      newNode.name = id;
-    } else {
-      // TODO: add a warning to the cell: non-existent reference
-    }
+    newNode.name = hash;
     return newNode;
   }
 
-  private transformIdToSymbol(node: mathjs.MathNode): mathjs.MathNode {
+  private transformHashToSymbol(node: mathjs.MathNode): mathjs.MathNode {
     if (!node.isSymbolNode) {
       return node;
     }
-    const id = node.name;
-    const symbol = this._graph.getSymbol(id);
+    const hash = node.name;
+    const symbol = hasher.getKey(hash);
     if (symbol) {
       const newNode: mathjs.MathNode = node.clone();
       newNode.name = symbol;
@@ -171,13 +175,15 @@ export class Formula {
 
   private reactToErrorInValue(): void {
     reaction(
-      () => { return this.value; },
-      value => { 
+      () => this.value,
+      value => {
         if (isNaN(value as number)) {
           this._parentCell._errors.referenceError();
+        } else {
+          this._parentCell._errors.clear(Type.REF_NOT_FOUND);
         }
       },
-      { fireImmediately: false }
+      { fireImmediately: true }
     );
   }
 }
