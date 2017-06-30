@@ -171,3 +171,19 @@ install node modules
 run the tests
 
 `npm run test`
+
+## Architecture
+
+Remath uses the graph data structure to represent a calculation. Calculations consist of equations that may or may not have dependencies on the values of other equations. Consider the simple calculation below.
+
+```
+a = 10  
+b =  a + 10
+```
+
+`a` is an independent equation because its value does not depend on any other equation's value. On the other hand, `b` is a dependent equation, because it's value depends on the value of `a`. When `a`'s value changes this causes `b`'s value to change as well.
+
+In Remath, both `a` and `b` would be represented as nodes in the graph. The graph has two different types of edges, a provider edge type and a dependency edge type.   `a` would have a
+
+If one equation 
+

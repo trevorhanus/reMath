@@ -8,8 +8,8 @@ function renderCells(remath: Remath, view: any): any {
   });
 }
 
-function renderCell(cell): string {
-  return `sym:${cell.symbol},form:${cell.formula},val:${cell.value},disp:${cell.displayValue}`;
+function renderCell(cell: Cell): string {
+  return `sym:${cell.symbol},formula:${cell.formula},val:${cell.value},disp:${cell.displayValue}`;
 }
 
 describe('Sessions', () => {
@@ -45,30 +45,30 @@ describe('Sessions', () => {
     runInAction(() => {
       const a = remath.addCell({
         symbol: 'a',
-        value: '= 10'
+        formula: '= 10'
       });
     });
-    expect(view.get('a')).toBe('sym:a,form:= 10,val:10,disp:10');
+    expect(view.get('a')).toBe('sym:a,formula:10,val:10,disp:10');
 
     // add b
     runInAction(() => {
       const b = remath.addCell({
         symbol: 'b',
-        value: '= a + 10'
+        formula: '= a + 10'
       });
     });
-    expect(view.get('a')).toBe('sym:a,form:= 10,val:10,disp:10');
-    expect(view.get('b')).toBe('sym:b,form:= a + 10,val:20,disp:20');
+    expect(view.get('a')).toBe('sym:a,formula:10,val:10,disp:10');
+    expect(view.get('b')).toBe('sym:b,formula:a + 10,val:20,disp:20');
 
     // change a
     runInAction(() => {
-      remath.find('a').setValue('= 20');
+      remath.find('a').setFormula('= 20');
     });
-    expect(view.get('a')).toBe('sym:a,form:= 20,val:20,disp:20');
-    expect(view.get('b')).toBe('sym:b,form:= a + 10,val:30,disp:30');
+    expect(view.get('a')).toBe('sym:a,formula:20,val:20,disp:20');
+    expect(view.get('b')).toBe('sym:b,formula:a + 10,val:30,disp:30');
   });
 
-  it('Adding variable whos formula references a non-existent symbol', () => {
+  it('Adding variable whose formula references a non-existent symbol', () => {
     const remath = new Remath();
     let view: ObservableMap<string> = observable.map<string>();
     const render = sinon.spy(() => {
@@ -79,19 +79,19 @@ describe('Sessions', () => {
     // add a
     const a = remath.addCell({
       symbol: 'a',
-      value: '= b + 10'
+      formula: '= b + 10'
     });
     expect(render.callCount).toBe(2);
-    expect(view.get('a')).toBe('sym:a,form:= b + 10,val:NaN,disp:#REF?');
+    expect(view.get('a')).toBe('sym:a,formula:b + 10,val:NaN,disp:#REF?');
 
     // add b = 30
     runInAction(() => {
       const b = remath.addCell({
         symbol: 'b',
-        value: '=30'
+        formula: '=30'
       });
     });
-    expect(view.get('b')).toBe('sym:b,form:= 30,val:30,disp:30');
-    expect(view.get('a')).toBe('sym:a,form:= b + 10,val:40,disp:40');
+    expect(view.get('b')).toBe('sym:b,formula:30,val:30,disp:30');
+    expect(view.get('a')).toBe('sym:a,formula:b + 10,val:40,disp:40');
   });
 });

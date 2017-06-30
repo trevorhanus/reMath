@@ -1,24 +1,24 @@
 {
-  "compileOnSave": true,
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
-    "noImplicitAny": true,
-    "removeComments": true,
-    "experimentalDecorators": true,
-    "preserveConstEnums": true,
-    "outDir": "./dist",
-    "sourceMap": true,
-    "pretty": true,
-    "declaration": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+   "compileOnSave": true,
+   "compilerOptions": {
+      "module": "commonjs",
+      "target": "es5",
+      "noImplicitAny": true,
+      "removeComments": true,
+      "experimentalDecorators": true,
+      "preserveConstEnums": true,
+      "outDir": "./lib",
+      "sourceMap": true,
+      "pretty": true,
+      "declaration": true,
+      "typeRoots": [
+         "./node_modules/@types"
+      ]
+   },
+   "include": [
+      "src/**/*"
+   ],
+   "exclude": [
+      "node_modules"
+   ]
 }

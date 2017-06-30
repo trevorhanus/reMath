@@ -8,3 +8,11 @@ tsconfig.json
 .vscode/
 
 __test__/
+
+docs/
+
+preprocessor.js
+
+dist/
+
+.idea/

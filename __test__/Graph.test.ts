@@ -1,49 +1,49 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
-import {Graph} from '../src/Graph';
-import hasher from '../src/utils/Hasher';
+import {Remath} from '../src/Remath';
+import {hasher} from '../src/utils/Hasher';
 
-describe('Graph', () => {
+describe('Remath', () => {
 
   it('add a cell', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
     expect(graph.find('a')).toEqual(a);
   });
 
-  it('find by hash', () => {
-    const graph = new Graph();
+  it('find by id', () => {
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
-    expect(graph.find(a.hash)).toEqual(a);
+    expect(graph.find(a.id)).toEqual(a);
   });
 
-  it('find by hash with 2 cells', () => {
-    const graph = new Graph();
+  it('find by id with 2 cells', () => {
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
     const b = graph.addCell({
       symbol: 'b'
     });
-    expect(graph.find(a.hash)).toEqual(a);
+    expect(graph.find(a.id)).toEqual(a);
   });
 
   it('find => null when no symbol', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     expect(graph.find('a')).toBeNull();
   });
 
-  it('find => null when no hash', () => {
-    const graph = new Graph();
+  it('find => null when no id', () => {
+    const graph = new Remath();
     expect(graph.find(hasher.getHash('none'))).toBeNull();
   });
 
   it('returns a list of cells', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
@@ -55,7 +55,7 @@ describe('Graph', () => {
   });
 
   it('knows when symbol exists', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
@@ -63,7 +63,7 @@ describe('Graph', () => {
   });
 
   it('knows when updated symbol exists', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
@@ -73,7 +73,7 @@ describe('Graph', () => {
   });
 
   it('Can remove a cell', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
@@ -81,19 +81,19 @@ describe('Graph', () => {
     graph.removeCell('a');
     expect(graph.cells.length).toBe(0);
     expect(graph.symbolExists('a')).toBe(false);
-    expect(graph.find(a.hash)).toBeNull();
+    expect(graph.find(a.id)).toBeNull();
     expect(graph.find('a')).toBeNull();
   });
 
   it('reacts when a dependent cell is removed', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a',
-      value: '= 10'
+      formula: '= 10'
     });
     const b = graph.addCell({
       symbol: 'b',
-      value: '= a + 10'
+      formula: '= a + 10'
     });
     const renderSpy = sinon.spy(() => {
       b.value;
@@ -101,13 +101,14 @@ describe('Graph', () => {
     autorun(renderSpy);
     expect(b.value).toBe(20);
     graph.removeCell('a');
-    expect(renderSpy.callCount).toBe(2);
+    expect(renderSpy.callCount).toBe(3);
     expect(b.hasError).toBe(true);
     expect(b.value).toEqual(NaN);
   });
 
-  it('Duplicate symbols', () => {
-    const graph = new Graph();
+  // TODO: add the messages functionality to graph
+  xit('Duplicate symbols', () => {
+    const graph = new Remath();
     const messagesSpy = sinon.spy(() => {
       graph.messages;
     });
@@ -123,7 +124,7 @@ describe('Graph', () => {
   });
 
   it('can add a removed symbol', () => {
-    const graph = new Graph();
+    const graph = new Remath();
     const a = graph.addCell({
       symbol: 'a'
     });
@@ -132,23 +133,5 @@ describe('Graph', () => {
       symbol: 'a'
     });
     expect(graph.find('a')).toEqual(a2);
-  });
-
-  it('can add a cell with no value', () => {
-    const graph = new Graph();
-    const a = graph.addCell({
-      symbol: 'a'
-    });
-    expect(a.value).toBe('');
-    expect(a.hasError).toBe(false);
-  });
-
-  it('populates from JSON', () => {
-    const pythagorean = require('./fixtures/pythagorean_theorem.json');
-    const graph = new Graph();
-    graph.fromJSON(pythagorean);
-    expect(graph.cells.length).toBe(3);
-    const c = graph.find('c');
-    expect(c.value).toBe(5);
   });
 });

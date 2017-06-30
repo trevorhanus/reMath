@@ -1,212 +1,230 @@
-import {observable, ObservableMap, action, computed, autorun, reaction} from 'mobx';
-import * as regex from './utils/regex';
-import {Graph} from './Graph';
-import {BaseCell} from './BaseCell';
-import {Type} from './errors/CellError';
+import {observable, action, computed, reaction, autorun} from 'mobx';
 import * as math from 'mathjs';
-import {matchesIdFormat} from './utils/regex';
-import hasher from './utils/Hasher';
+import {ErrorType, IError} from './IError';
+import {cleanFormula} from "./utils/regex";
+import {Cell} from './Cell';
+import {Remath} from './Remath';
+import {Symbol, ISymbolState} from "./Symbol";
+import {IErrorContainer} from "./ErrorContainer";
 
-export interface Node extends mathjs.MathNode {
-  hash: string;
+export interface ISymbolNode extends mathjs.MathNode {
+   cell: Cell;
 }
 
-export class Formula {
-  private _graph: Graph;
-  private _parentCell: BaseCell;
-  @observable private _tempInvalidFormula: string;
-  @observable private _formula: string;
-  @observable.ref private _rootNode: Node;
+export interface IScope {
+   [symbol: string]: number;
+}
 
-  constructor(parentCell: BaseCell, graph: Graph) {
-    this._tempInvalidFormula = null;
-    this._formula = '';
-    this._parentCell = parentCell;
-    this._graph = graph;
-    this._rootNode = null;
-    this.reactToErrorInValue();
-  }
+export interface IFormula {
+   setFormula: (formula: string) => void; // throws when formula is invalid
+   formula: string;
+   value: number;
+   displayValue: string;
+}
 
-  @action
-  setFormula(formula: string): void {
-    this._tempInvalidFormula = null;
-    const newFormula = regex.cleanFormula(formula);
-    // make sure the formula is valid
-    const treeRoot: Node = this.parseFormula(newFormula);
-    if (treeRoot === null) {
-      this._tempInvalidFormula = formula;
-      return;
-    }
-    // check for circular references
-    const circularReferences = this.findCircularReferences(treeRoot);
-    if (circularReferences.length > 0) {
-      this._parentCell._errors.circularReferences(circularReferences, newFormula);
-      this._tempInvalidFormula = formula;
-      return;
-    }
-    // set the hash for any symbol nodes
-    this.assignSymbolHashesToSymbolNodes(treeRoot);
-    this._rootNode = treeRoot as Node;
-    this._formula = newFormula;
-  }
+export interface IFormulaState extends ISymbolState {
+   formula?: string;
+}
 
-  @computed
-  public get formula(): string {
-    if (this._tempInvalidFormula !== null) {
-      return this._tempInvalidFormula;
-    } else {
-      this._rootNode.forEach(updateSymbols);
-      return `= ${this._rootNode.toString()}`;
-    }
+export class Formula extends Symbol implements IFormula {
+   @observable.ref private _rootNode: mathjs.MathNode;
+   @observable private _tempInvalidFormula: string;
 
-    function updateSymbols(node: Node): void {
-      if (node.isSymbolNode) {
-        node.name = hasher.getKey(node.hash);
+   constructor(graph: Remath, initialState: IFormulaState) {
+      super(graph, initialState);
+      this._rootNode = null;
+      this._tempInvalidFormula = null;
+      const formula = initialState.formula || '';
+      this.setFormula(formula);
+      this.watchProvidersForChanges();
+   }
+
+   @computed
+   get formula(): string {
+      if (this._tempInvalidFormula !== null) {
+         return this._tempInvalidFormula;
       }
-    }
-  }
 
-  @computed
-  public get value(): number {
-    if (this._formula === '') {
-      return 0;
-    }
-    try {
-      return this._rootNode.eval(this.scope);
-    } catch (e) {
-      return NaN;
-    }
-  }
-
-  @computed
-  private get scope(): ({[symbol: string]: number}) {
-    let scope: ({[symbol: string]: number}) = {};
-    this.symbolNodes.forEach((node: Node) => {
-      const symbol = node.name;
-      const cell = this._graph.find(symbol);
-      if (cell) {
-        scope[symbol] = cell.value as number;
+      if (this._rootNode === null) {
+         return '';
       }
-    });
-    return scope;
-  }
 
-  @computed
-  private get symbolNodes(): Node[] {
-    return this._rootNode.filter((node: Node) => {
-      return node.isSymbolNode;
-    }) as Node[];
-  }
+      return this._rootNode.toString();
+   }
 
-  @computed
-  public get hasDependencies(): boolean {
-    return this._rootNode.filter((node: Node) => {
-      return node.isSymbolNode;
-    }).length > 0;
-  }
-
-  private assignSymbolHashesToSymbolNodes(root: Node): void {
-    root.filter(node => {
-      return node.isSymbolNode;
-    }).forEach((node: Node) => {
-      const symbol = node.name;
-      const hash = hasher.getHash(symbol);
-      node.hash = hash;
-    });
-  }
-
-  public traverseDependencies(callback: (symbolOrId: string) => void): void {
-    this.symbolNodes.forEach(node => {
-      callback(node.name);
-      const cell = this._graph.find(node.name);
-      if (cell) {
-        cell.traverseDependecies(callback);
+   @action
+   setFormula(formula: string): void {
+      if (formula === '') {
+         return;
       }
-    });
-  }
 
-  public dependsOn(symbolOrHash: string): boolean {
-    if (!this._rootNode) return false;
-    const isHash = matchesIdFormat(symbolOrHash);
-    const symbol = isHash ? hasher.getKey(symbolOrHash) : symbolOrHash;
+      // start fresh
+      this._tempInvalidFormula = null;
+      this.clearErrors();
 
-    let dependsOn = false;
-    this.traverseDependencies(dependencySymbolOrHash => {
-      const isHash = matchesIdFormat(dependencySymbolOrHash);
-      const depSymbol = isHash ? hasher.getKey(dependencySymbolOrHash): dependencySymbolOrHash;
-      if (symbol === depSymbol) {
-        dependsOn = true;
+      const newFormula = cleanFormula(formula);
+
+      // use the mathjs library to parse the formula and make sure it is valid
+      const rootNode = this.createNodeTree(newFormula);
+      if (rootNode === null) {
+         // formula was not valid
+         this._tempInvalidFormula = newFormula;
+         return;
       }
-    });
-    return dependsOn;
-  }
 
-  private parseFormula(formula: string): Node {
-    let node: Node = null;
-    try {
-      node = math.parse(formula) as Node;
-    } catch (e) {
-      this._parentCell._errors.invalidFormula(formula, e);
-    }
-    return node;
-  }
+      // now we need to update this cell's dependencies
+      this.updateDependencies(rootNode);
 
-  private findCircularReferences(treeRoot: Node): BaseCell[] {
-    let refs: BaseCell[] = [];
-    treeRoot.filter((node: Node) => {
-      return node.isSymbolNode
-    }).forEach((node: Node) => {
-      const cell = this._graph.find(node.name);
-      if (node.name === this._parentCell.hash || node.name === this._parentCell.symbol) {
-        if (cell !== null) {
-          refs.push(cell);
-        }
+      // finally set the rootNode
+      this._rootNode = rootNode;
+   }
+
+   @computed
+   get value(): number {
+      if (this._rootNode === null || !this.valid) {
+         return NaN;
       }
-      if (cell !== null && cell.dependsOn(this._parentCell.hash)) {
-        refs.push(cell);
+
+      try {
+         return this._rootNode.eval(this.scope);
+      } catch (e) {
+         return NaN;
       }
-    });
-    return refs;
-  }
+   }
 
-  // private transformSymbolToHash(node: mathjs.MathNode): mathjs.MathNode {
-  //   if (!node.isSymbolNode) {
-  //     return node;
-  //   }
-  //   const symbol = node.name;
-  //   const hash = hasher.getHash(symbol);
-  //   const newNode: mathjs.MathNode = node.clone();
-  //   newNode.name = hash;
-  //   return newNode;
-  // }
+   // TODO: implement numeraljs for the display value. should be able to set a mask
+   // and then pass the value through the mask
+   @computed
+   get displayValue(): string {
+       if (!this.valid) {
+           return this.errors[0].displayValue;
+       }
+       return this.value.toString();
+   }
 
-  // private transformHashToSymbol(node: mathjs.MathNode): mathjs.MathNode {
-  //   if (!node.isSymbolNode) {
-  //     return node;
-  //   }
-  //   const hash = node.name;
-  //   const symbol = hasher.getKey(hash);
-  //   if (symbol) {
-  //     const newNode: mathjs.MathNode = node.clone();
-  //     newNode.name = symbol;
-  //     return newNode;
-  //   } else {
-  //     // TODO: add a warning to the cell: non-existent reference
-  //     return node;
-  //   }
-  // }
+   @computed
+   get scope(): IScope {
+      const scope: IScope = {};
+      this.symbolNodes.forEach((node: ISymbolNode) => {
 
-  private reactToErrorInValue(): void {
-    reaction(
-      () => this.value,
-      value => {
-        if (isNaN(value as number)) {
-          this._parentCell._errors.referenceError();
-        } else {
-          this._parentCell._errors.clear(Type.REF_NOT_FOUND);
-        }
-      },
-      { fireImmediately: true }
-    );
-  }
+         if (!node.cell || isNaN(node.cell.value)) {
+            // this.addCellReferenceError(`[${node.cell.symbol}] has an error`);
+            throw {};
+         }
+
+         if (!this.graph.hasCell(node.cell.id)) {
+            // cell was deleted
+            // this.addCellReferenceError(`[${node.cell.symbol}] was deleted`);
+            throw {};
+         }
+
+         const value = node.cell.value;
+         const symbol = node.cell.symbol;
+         // make sure the node has the same symbol
+         node.name = symbol;
+         scope[symbol] = value;
+      });
+      return scope;
+   }
+
+   @computed
+   private get symbolNodes(): ISymbolNode[] {
+      if (this._rootNode === null) return [];
+
+      return this._rootNode.filter((node: mathjs.MathNode) => {
+         return node.isSymbolNode;
+      }) as ISymbolNode[];
+   }
+
+   @action
+   private createNodeTree(formula: string): mathjs.MathNode {
+      let rootNode: mathjs.MathNode = null;
+      try {
+         rootNode = math.parse(formula);
+         return rootNode;
+      } catch (e) {
+         this.addInvalidFormula(e.message);
+         return rootNode;
+      }
+   }
+
+   @action
+   private updateDependencies(rootNode: mathjs.MathNode): void {
+      // remove all previous dependencies
+      this.clearDependencies();
+
+      // find the referenced cell for each symbol node
+      rootNode.filter(node => node.isSymbolNode).forEach((symbolNode: ISymbolNode) => {
+         if (this.symbol === symbolNode.name) {
+            this.addCellReferenceError(`[${this.symbol}]'s formula references itself.`);
+            return;
+         }
+
+         const provider = this.graph.find(symbolNode.name);
+
+         if (provider === null) {
+            // we couldn't find a cell with the given symbol
+            // need to throw a reference error
+            this.addCellReferenceError(`${this.symbol}'s formula references ${symbolNode.name} which does not exist.`);
+            return;
+         }
+
+         symbolNode.cell = provider;
+
+         try {
+            // attempt to add dependency
+            this.addDependency(provider);
+         } catch (e) {
+            this.addCellReferenceError('Circular reference detected.');
+         }
+      });
+   }
+
+   @action
+   private clearErrors(): void {
+      this.clearError(ErrorType.InvalidFormula);
+      this.clearError(ErrorType.CircularReference);
+      this.clearError(ErrorType.ReferenceNotFound);
+   }
+
+   @action
+   private addInvalidFormula(message: string): void {
+      const error: IError = {
+         type: ErrorType.InvalidFormula,
+         message: message,
+         displayValue: '#FORM!'
+      };
+      this.addError(error);
+   }
+
+   @action
+   private addCellReferenceError(message: string): void {
+      const error: IError = {
+         type: ErrorType.ReferenceNotFound,
+         message: message,
+         displayValue: '#REF?'
+      };
+      this.addError(error);
+   }
+
+   private watchProvidersForChanges(): void {
+      reaction(() => {
+         if (isNaN(this.value)) {
+            return NaN;
+         }
+      }, (value) => {
+         this.symbolNodes.forEach((node: ISymbolNode) => {
+
+            if (!node.cell || isNaN(node.cell.value)) {
+               this.addCellReferenceError(`[${node.name}] has an error`);
+               return;
+            }
+
+            if (!this.graph.hasCell(node.cell.id)) {
+               // cell was deleted
+               this.addCellReferenceError(`referenced cell [${node.cell.symbol}] was deleted`);
+            }
+         });
+      });
+   }
 }

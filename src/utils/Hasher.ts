@@ -32,14 +32,14 @@ export class Hasher {
     this.set(newKey, hash);
   }
 
+   public set(key: string, hash: string): void {
+      this._keyToHashMap.set(key, hash);
+      this._hashToKeyMap.set(hash, key);
+   }
+
   private remove(key: string, hash: string): void {
     this._keyToHashMap.delete(key);
     this._hashToKeyMap.delete(hash);
-  }
-
-  private set(key: string, hash: string): void {
-    this._keyToHashMap.set(key, hash);
-    this._hashToKeyMap.set(hash, key);
   }
 }
 
@@ -69,4 +69,6 @@ class Map<T> {
 }
 
 const hasher = new Hasher();
-export default hasher;
+export {
+   hasher
+}
