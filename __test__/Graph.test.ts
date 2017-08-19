@@ -1,7 +1,7 @@
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
 import {Remath} from '../src/Remath';
-import {hasher} from '../src/utils/Hasher';
+import {hasher} from '../src/utilities/Hasher';
 
 describe('Remath', () => {
 

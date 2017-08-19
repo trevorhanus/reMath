@@ -1,5 +1,5 @@
 import * as sinon from 'sinon';
-import {hasher} from '../src/utils/Hasher';
+import {hasher} from '../src/utilities/Hasher';
 import {Symbol} from '../src/Symbol';
 import {ErrorType} from "../src/IError";
 

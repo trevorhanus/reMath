@@ -1,9 +1,9 @@
-import {Node, INodeState} from './Node';
-import {hasher} from './utils/Hasher';
+import {Node, INodeState} from './superclasses/Node';
+import {hasher} from './utilities/Hasher';
 import {Remath} from './Remath';
 import {ErrorType, IError} from './IError';
 import {observable, computed, action} from "mobx";
-import {isValidSymbol} from "./utils/regex";
+import {isValidSymbol} from "./utilities/regex";
 import {isNullOrUndefined} from "util";
 
 export interface ISymbol {
@@ -36,7 +36,7 @@ export class Symbol extends Node implements ISymbol {
    updateSymbol(symbol: string): void {
       // start fresh
       this._tempInvalidSymbol = null;
-      this.clearError(ErrorType.InvalidSymbol);
+      this.__clearError(ErrorType.InvalidSymbol);
 
       symbol = symbol.trim();
 
@@ -71,6 +71,6 @@ export class Symbol extends Node implements ISymbol {
          message: message,
          displayValue: '#SYM!'
       };
-      this.addError(error);
+      this.__addError(error);
    }
 }

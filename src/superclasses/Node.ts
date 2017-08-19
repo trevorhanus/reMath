@@ -1,7 +1,7 @@
 import {observable, computed, action, ObservableMap} from 'mobx';
-import {genId} from './utils/id';
-import {Remath} from './Remath';
-import {IError, ErrorType} from './IError';
+import {genId} from '../utilities/id';
+import {Remath} from '../Remath';
+import {IError, ErrorType} from '../IError';
 import {Lockable, ILockableState, ILockable} from "./Lockable";
 
 export interface INode extends ILockable {

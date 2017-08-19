@@ -1,0 +1,10 @@
+site_name: MathX Documentation
+theme: readthedocs
+pages:
+  - Home: index.md
+  - Concepts: Concepts.md
+  - MathX: MathX.md
+  - Calculation: Calculation.md
+  - Equation: Equation.md
+  - Superclasses:
+    - ErrorContainer: ErrorContainer.md

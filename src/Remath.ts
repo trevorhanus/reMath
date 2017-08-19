@@ -1,6 +1,6 @@
 import {Cell, CellState} from './Cell';
-import {matchesIdFormat} from './utils/regex';
-import {hasher} from './utils/Hasher';
+import {matchesIdFormat} from './utilities/regex';
+import {hasher} from './utilities/Hasher';
 import {observable, ObservableMap, computed, action} from "mobx";
 
 export interface IRemath {

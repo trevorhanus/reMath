@@ -1,4 +1,4 @@
-import {Lockable} from '../src/Lockable';
+import {Lockable} from '../src/superclasses/Lockable';
 import {autorun} from 'mobx';
 import * as sinon from 'sinon';
 

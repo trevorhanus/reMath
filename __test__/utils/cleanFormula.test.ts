@@ -1,4 +1,4 @@
-import {cleanFormula} from '../../src/utils/regex';
+import {cleanFormula} from '../../src/utilities/regex';
 
 describe('Clean Formula', () => {
 

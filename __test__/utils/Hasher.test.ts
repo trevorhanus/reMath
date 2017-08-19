@@ -12,8 +12,8 @@
 // value you used to give me for 'a' and return a new value for 'a' next time you are
 // asked for it
 
-import {hasher} from '../../src/utils/Hasher';
-import {matchesIdFormat} from '../../src/utils/regex';
+import {hasher} from '../../src/utilities/Hasher';
+import {matchesIdFormat} from '../../src/utilities/regex';
 
 describe('symbol hash', () => {
 

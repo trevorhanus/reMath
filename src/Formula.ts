@@ -1,11 +1,11 @@
 import {observable, action, computed, reaction, autorun} from 'mobx';
 import * as math from 'mathjs';
 import {ErrorType, IError} from './IError';
-import {cleanFormula} from "./utils/regex";
+import {cleanFormula} from "./utilities/regex";
 import {Cell} from './Cell';
 import {Remath} from './Remath';
 import {Symbol, ISymbolState} from "./Symbol";
-import {IErrorContainer} from "./ErrorContainer";
+import {IErrorContainer} from "./superclasses/ErrorContainer";
 
 export interface ISymbolNode extends mathjs.MathNode {
    cell: Cell;
@@ -182,9 +182,9 @@ export class Formula extends Symbol implements IFormula {
 
    @action
    private clearErrors(): void {
-      this.clearError(ErrorType.InvalidFormula);
-      this.clearError(ErrorType.CircularReference);
-      this.clearError(ErrorType.ReferenceNotFound);
+      this.__clearError(ErrorType.InvalidFormula);
+      this.__clearError(ErrorType.CircularReference);
+      this.__clearError(ErrorType.ReferenceNotFound);
    }
 
    @action
@@ -194,7 +194,7 @@ export class Formula extends Symbol implements IFormula {
          message: message,
          displayValue: '#FORM!'
       };
-      this.addError(error);
+      this.__addError(error);
    }
 
    @action
@@ -204,7 +204,7 @@ export class Formula extends Symbol implements IFormula {
          message: message,
          displayValue: '#REF?'
       };
-      this.addError(error);
+      this.__addError(error);
    }
 
    private watchProvidersForChanges(): void {

@@ -1,4 +1,4 @@
-import {isValidSymbol} from '../../src/utils/regex';
+import {isValidSymbol} from '../../src/utilities/regex';
 
 describe('Valid Symbol', () => {
 

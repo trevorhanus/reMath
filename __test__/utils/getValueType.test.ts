@@ -1,4 +1,4 @@
-import {getValueType} from '../../src/utils/regex';
+import {getValueType} from '../../src/utilities/regex';
 
 describe('Get Value Type', () => {
 

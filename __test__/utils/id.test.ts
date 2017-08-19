@@ -1,5 +1,5 @@
-import * as ids from '../../src/utils/id';
-import {matchesIdFormat} from '../../src/utils/regex';
+import * as ids from '../../src/utilities/id';
+import {matchesIdFormat} from '../../src/utilities/regex';
 
 describe('utils id', () => {
 

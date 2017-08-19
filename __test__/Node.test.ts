@@ -1,4 +1,4 @@
-import {Node} from '../src/Node';
+import {Node} from '../src/superclasses/Node';
 import {Remath} from '../src/Remath';
 
 describe('Node', () => {

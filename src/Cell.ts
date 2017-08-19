@@ -1,8 +1,8 @@
-import {INode} from './Node';
-import {IErrorContainer} from "./ErrorContainer";
+import {INode} from './superclasses/Node';
+import {IErrorContainer} from "./superclasses/ErrorContainer";
 import {ISymbol} from "./Symbol";
 import {IFormula, Formula, IFormulaState} from "./Formula";
-import {ILockable} from "./Lockable";
+import {ILockable} from "./superclasses/Lockable";
 
 export class Cell extends Formula {}
 
