@@ -5,7 +5,6 @@ import {cleanFormula} from "./utilities/regex";
 import {Cell} from './Cell';
 import {Remath} from './Remath';
 import {Symbol, ISymbolState} from "./Symbol";
-import {IErrorContainer} from "./superclasses/ErrorContainer";
 
 export interface ISymbolNode extends mathjs.MathNode {
    cell: Cell;

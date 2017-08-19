@@ -1,5 +1,5 @@
 import {observable, computed, action, ObservableMap} from 'mobx';
-import {genId} from '../utilities/id';
+import {genId} from '../utilities/genId';
 import {Remath} from '../Remath';
 import {IError, ErrorType} from '../IError';
 import {Lockable, ILockableState, ILockable} from "./Lockable";

@@ -1,4 +1,4 @@
-import {genId} from './id'
+import {genId} from './genId'
 
 export class Hasher {
   private _keyToHashMap: Map<string>;
